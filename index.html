@@ -5,14 +5,15 @@
 <title>NBA GM 單機版</title>
 <style>
   body { font-family: Arial, sans-serif; background:#f0f0f0; padding:20px; }
-  h1, h2 { text-align:center; }
-  select, button { padding:5px 10px; margin:5px; }
+  h1,h2 { text-align:center; }
+  select,button { padding:5px 10px; margin:5px; }
   table { border-collapse: collapse; width:100%; margin-bottom:20px; }
-  th, td { border:1px solid #aaa; padding:6px; text-align:center; }
+  th,td { border:1px solid #aaa; padding:6px; text-align:center; }
   th { background:#333; color:#fff; }
 </style>
 </head>
 <body>
+
 <h1>NBA GM 單機版</h1>
 
 <div id="setup">
@@ -36,62 +37,58 @@
   <button onclick="saveGame()">存檔</button>
   <button onclick="loadGame()">讀檔</button>
   <button onclick="simulateSeason()">模擬下一季比賽</button>
-  <div id="result" style="margin-top:20px;"></div>
+  <div id="result" style="margin-top:20px; white-space: pre-line;"></div>
 </div>
 
 <script>
 // --- 球隊與球員資料 ---
 let teams = [
-  {
-    name: "Golden State Warriors", style:"pace_and_space", homeAdv:true,
-    roster: [
+  {name:"Golden State Warriors", style:"pace_and_space", homeAdv:true,
+    roster:[
       {name:"Stephen Curry", pos:"PG", overall:97, superstar:true},
       {name:"Klay Thompson", pos:"SG", overall:90, superstar:false},
       {name:"Draymond Green", pos:"PF", overall:88, superstar:false},
       {name:"Andrew Wiggins", pos:"SF", overall:85, superstar:false},
       {name:"Kevon Looney", pos:"C", overall:80, superstar:false}
-    ]
-  },
-  {
-    name: "Boston Celtics", style:"balanced", homeAdv:false,
-    roster: [
+    ]},
+  {name:"Boston Celtics", style:"balanced", homeAdv:false,
+    roster:[
       {name:"Jayson Tatum", pos:"SF", overall:96, superstar:true},
       {name:"Jaylen Brown", pos:"SG", overall:90, superstar:false},
       {name:"Marcus Smart", pos:"PG", overall:85, superstar:false},
       {name:"Robert Williams", pos:"C", overall:82, superstar:false},
       {name:"Al Horford", pos:"PF", overall:84, superstar:false}
-    ]
-  },
-  {name:"Los Angeles Lakers", style:"balanced", homeAdv:true, roster:[
-    {name:"LeBron James", pos:"SF", overall:97, superstar:true},
-    {name:"Anthony Davis", pos:"PF", overall:94, superstar:true},
-    {name:"D'Angelo Russell", pos:"PG", overall:85, superstar:false},
-    {name:"Malik Beasley", pos:"SG", overall:82, superstar:false},
-    {name:"Dwight Howard", pos:"C", overall:80, superstar:false}
-  ]}
+    ]},
+  {name:"Los Angeles Lakers", style:"balanced", homeAdv:true,
+    roster:[
+      {name:"LeBron James", pos:"SF", overall:97, superstar:true},
+      {name:"Anthony Davis", pos:"PF", overall:94, superstar:true},
+      {name:"D'Angelo Russell", pos:"PG", overall:85, superstar:false},
+      {name:"Malik Beasley", pos:"SG", overall:82, superstar:false},
+      {name:"Dwight Howard", pos:"C", overall:80, superstar:false}
+    ]}
 ];
 
-let playerTeam = null;
-let aiTeams = [];
-let currentSeason = 1;
+let playerTeam=null;
+let aiTeams=[];
+let currentSeason=1;
 
 // --- 選隊下拉列表 ---
-function populateTeamSelect() {
-  const select = document.getElementById('teamSelect');
+function populateTeamSelect(){
+  const select=document.getElementById('teamSelect');
   teams.forEach(t=>{
-    const opt = document.createElement('option');
-    opt.value = t.name;
-    opt.textContent = t.name;
+    const opt=document.createElement('option');
+    opt.value=t.name; opt.textContent=t.name;
     select.appendChild(opt);
   });
 }
 
 // --- 玩家選隊 ---
 function chooseTeam(){
-  const select = document.getElementById('teamSelect');
-  playerTeam = teams.find(t=>t.name===select.value);
+  const select=document.getElementById('teamSelect');
+  playerTeam=teams.find(t=>t.name===select.value);
   playerTeam.progress={seasonWins:0, seasonLosses:0};
-  aiTeams = teams.filter(t=>t.name!==select.value);
+  aiTeams=teams.filter(t=>t.name!==select.value);
   document.getElementById('setup').style.display='none';
   document.getElementById('initialGames').style.display='block';
   alert(`你選擇了 ${playerTeam.name}！`);
@@ -99,78 +96,93 @@ function chooseTeam(){
 
 // --- 初始比賽 ---
 function startInitialGames(numGames){
+  let resultText="";
   for(let i=0;i<numGames;i++){
-    simulateGameBetween(playerTeam, aiTeams[i%aiTeams.length]);
+    const ai=aiTeams[i%aiTeams.length];
+    const winner=simulateGameBetween(playerTeam, ai);
+    resultText+=`第 ${i+1} 場: ${winner} 勝\n`;
   }
+  displayPlayerTeam();
   document.getElementById('initialGames').style.display='none';
   document.getElementById('mainGame').style.display='block';
-  displayPlayerTeam();
+  document.getElementById('result').innerText=resultText;
   alert(`完成 ${numGames} 場初始比賽！`);
 }
 
 // --- 顯示球員表 ---
 function displayPlayerTeam(){
-  let html = `<table><tr><th>球員</th><th>位置</th><th>Overall</th><th>巨星</th></tr>`;
+  let html=`<table><tr><th>球員</th><th>位置</th><th>Overall</th><th>巨星</th></tr>`;
   playerTeam.roster.forEach(p=>{
-    html += `<tr><td>${p.name}</td><td>${p.pos}</td><td>${p.overall}</td><td>${p.superstar?'⭐':''}</td></tr>`;
+    html+=`<tr><td>${p.name}</td><td>${p.pos}</td><td>${p.overall.toFixed(1)}</td><td>${p.superstar?'⭐':''}</td></tr>`;
   });
-  html += `</table>`;
-  document.getElementById('playerTeamTable').innerHTML = html;
+  html+=`</table>`;
+  document.getElementById('playerTeamTable').innerHTML=html;
 }
 
 // --- 訓練選單 ---
 function trainMenu(){
-  let attr = prompt("輸入要訓練的能力 (scoring/shooting/playmaking/defense/athleticism):");
-  let pName = prompt("輸入要訓練的球員名字:");
-  let player = playerTeam.roster.find(p=>p.name===pName);
+  let attr=prompt("輸入要訓練的能力 (scoring/shooting/playmaking/defense/athleticism):");
+  let pName=prompt("輸入要訓練的球員名字:");
+  let player=playerTeam.roster.find(p=>p.name===pName);
   if(player && ['scoring','shooting','playmaking','defense','athleticism'].includes(attr)){
-    trainPlayer(player, attr);
+    trainPlayer(player,attr);
     displayPlayerTeam();
     alert(`${pName} 的 ${attr} 增長完成！`);
   } else alert("輸入錯誤！");
 }
 
 // --- 球員訓練 ---
-function trainPlayer(player, attribute){
-  const growth = Math.random()*2+1;
-  player[attribute] += growth;
+function trainPlayer(player,attribute){
+  const growth=Math.random()*2+1;
+  player[attribute]+=growth;
   if(player[attribute]>100) player[attribute]=100;
 }
 
 // --- 季賽模擬 ---
 function simulateSeason(){
+  let resultText="";
   aiTeams.forEach((ai,i)=>{
-    simulateGameBetween(playerTeam, ai);
+    const winner=simulateGameBetween(playerTeam, ai);
+    resultText+=`對戰 ${ai.name}: ${winner} 勝\n`;
   });
   displayPlayerTeam();
-  alert(`第 ${currentSeason} 季結束！勝場: ${playerTeam.progress.seasonWins} / 敗場: ${playerTeam.progress.seasonLosses}`);
+  document.getElementById('result').innerText=resultText+`\n第 ${currentSeason} 季結束！勝場: ${playerTeam.progress.seasonWins} / 敗場: ${playerTeam.progress.seasonLosses}`;
   currentSeason++;
 }
 
 // --- 模擬比賽 ---
-function simulateGameBetween(teamA, teamB){
+function simulateGameBetween(teamA,teamB){
   function calcTeamPower(team){
     let power=0;
     team.roster.forEach(p=>{
-      power += p.overall * (p.superstar?1.5:1);
+      power+=p.overall*(p.superstar?1.5:1);
     });
-    power /= team.roster.length;
+    power/=team.roster.length;
     if(team.style==='pace_and_space') power*=1.03;
     if(team.style==='defense_first') power*=1.05;
     if(team.homeAdv) power*=1.03;
-    power *= 0.95 + Math.random()*0.1;
+    power*=0.95+Math.random()*0.1;
     return power;
   }
-  const powerA = calcTeamPower(teamA);
-  const powerB = calcTeamPower(teamB);
-  if(powerA>powerB) teamA.progress.seasonWins++, teamB.progress.seasonLosses++;
-  else teamB.progress.seasonWins++, teamA.progress.seasonLosses++;
+  const powerA=calcTeamPower(teamA);
+  const powerB=calcTeamPower(teamB);
+  let winner;
+  if(powerA>powerB){
+    teamA.progress.seasonWins++;
+    teamB.progress.seasonLosses++;
+    winner=teamA.name;
+  } else {
+    teamB.progress.seasonWins++;
+    teamA.progress.seasonLosses++;
+    winner=teamB.name;
+  }
+  return winner;
 }
 
 // --- 存檔/讀檔 ---
 function saveGame(){
-  const data={playerTeam, aiTeams, currentSeason};
-  localStorage.setItem('nbaGM', JSON.stringify(data));
+  const data={playerTeam,aiTeams,currentSeason};
+  localStorage.setItem('nbaGM',JSON.stringify(data));
   alert("存檔完成！");
 }
 function loadGame(){
