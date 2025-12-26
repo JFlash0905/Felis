@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <title>NBA GM 單機版</title>
 <style>
-body { font-family: Arial, sans-serif; background:#f0f0f0; padding:20px; }
-h1,h2 { text-align:center; }
-select,button { padding:5px 10px; margin:5px; }
-table { border-collapse: collapse; width:100%; margin-bottom:20px; }
-th,td { border:1px solid #aaa; padding:6px; text-align:center; }
-th { background:#333; color:#fff; }
+  body { font-family: Arial, sans-serif; background:#f0f0f0; padding:20px; }
+  h1,h2 { text-align:center; }
+  select,button { padding:5px 10px; margin:5px; }
+  table { border-collapse: collapse; width:100%; margin-bottom:20px; }
+  th,td { border:1px solid #aaa; padding:6px; text-align:center; }
+  th { background:#333; color:#fff; }
 </style>
 </head>
 <body>
@@ -41,8 +41,8 @@ th { background:#333; color:#fff; }
 </div>
 
 <script>
-// --- 球隊與球員 ---
-let teams=[
+// --- 球隊與球員資料 ---
+let teams = [
   {name:"Golden State Warriors", style:"pace_and_space", homeAdv:true,
     roster:[
       {name:"Stephen Curry", pos:"PG", overall:97, superstar:true},
@@ -73,18 +73,17 @@ let playerTeam=null;
 let aiTeams=[];
 let currentSeason=1;
 
-// --- 下拉選單 ---
+// --- 選隊下拉列表 ---
 function populateTeamSelect(){
   const select=document.getElementById('teamSelect');
   teams.forEach(t=>{
     const opt=document.createElement('option');
-    opt.value=t.name;
-    opt.textContent=t.name;
+    opt.value=t.name; opt.textContent=t.name;
     select.appendChild(opt);
   });
 }
 
-// --- 選隊 ---
+// --- 玩家選隊 ---
 function chooseTeam(){
   const select=document.getElementById('teamSelect');
   playerTeam=teams.find(t=>t.name===select.value);
@@ -97,7 +96,6 @@ function chooseTeam(){
 
 // --- 初始比賽 ---
 function startInitialGames(numGames){
-  if(!playerTeam){ alert("請先選隊伍"); return; }
   let resultText="";
   for(let i=0;i<numGames;i++){
     const ai=aiTeams[i%aiTeams.length];
@@ -121,7 +119,7 @@ function displayPlayerTeam(){
   document.getElementById('playerTeamTable').innerHTML=html;
 }
 
-// --- 訓練 ---
+// --- 訓練選單 ---
 function trainMenu(){
   let attr=prompt("輸入要訓練的能力 (scoring/shooting/playmaking/defense/athleticism):");
   let pName=prompt("輸入要訓練的球員名字:");
@@ -133,13 +131,14 @@ function trainMenu(){
   } else alert("輸入錯誤！");
 }
 
+// --- 球員訓練 ---
 function trainPlayer(player,attribute){
   const growth=Math.random()*2+1;
   player[attribute]+=growth;
   if(player[attribute]>100) player[attribute]=100;
 }
 
-// --- 季賽 ---
+// --- 季賽模擬 ---
 function simulateSeason(){
   let resultText="";
   aiTeams.forEach((ai,i)=>{
@@ -151,11 +150,13 @@ function simulateSeason(){
   currentSeason++;
 }
 
-// --- 模擬單場 ---
+// --- 模擬比賽 ---
 function simulateGameBetween(teamA,teamB){
   function calcTeamPower(team){
     let power=0;
-    team.roster.forEach(p=>{ power+=p.overall*(p.superstar?1.5:1); });
+    team.roster.forEach(p=>{
+      power+=p.overall*(p.superstar?1.5:1);
+    });
     power/=team.roster.length;
     if(team.style==='pace_and_space') power*=1.03;
     if(team.style==='defense_first') power*=1.05;
