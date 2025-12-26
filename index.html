@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>NBA GM v0.8.2</title>
+<title>NBA GM v0.9</title>
 <style>
 body{font-family:Arial;background:#f5f5f5;padding:20px}
 h1{margin-bottom:5px}
@@ -17,8 +17,8 @@ th,td{border:1px solid #ccc;padding:6px 10px;text-align:center}
 </style>
 </head>
 <body>
-<h1>NBA GM v0.8.2</h1>
-<div class="version">（打開就能玩，全 NBA 球員建隊）</div>
+<h1>NBA GM v0.9</h1>
+<div class="version">（選完球員後一切功能正常）</div>
 
 <!-- 選隊 -->
 <div id="selectTeamUI">
@@ -198,10 +198,44 @@ function renderRosterTable(){
 
 // ===== 確認隊伍 =====
 function confirmTeam(){
-  alert("隊伍建立完成！");
   document.getElementById("buildTeam").style.display="none";
   document.getElementById("game").style.display="block";
-  // 後續自由球員池 / AI 分配可在這裡初始化
+
+  // 剩餘 pool -> 自由球員池
+  renderFreeAgents();
+
+  // 分配 AI 球隊
+  distributeToAITeams();
+}
+
+// ===== 渲染自由球員池 =====
+function renderFreeAgents(){
+  const tb=document.getElementById("freeAgents").querySelector("tbody");
+  tb.innerHTML="";
+  pool.forEach((p,i)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td><input type="checkbox" data-index="${i}"></td><td>${p.name}</td><td>${p.pos}</td><td>${p.ovr}</td><td>$${p.salary}M</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+// ===== 分配剩餘球員到 AI 球隊 =====
+function distributeToAITeams(){
+  const aiTeamsKeys = Object.keys(teamData).filter(t=>t!==playerTeam);
+  let tempPool = [...pool];
+  shuffle(tempPool);
+  aiTeamsKeys.forEach(team=>{
+    teamData[team]=[];
+    for(let i=0;i<MAX_AI_SIGN;i++){
+      if(tempPool.length>0){
+        const p = tempPool.shift();
+        teamData[team].push(p);
+      }
+    }
+  });
+  // pool 更新剩餘自由球員
+  pool = tempPool;
+  renderFreeAgents();
 }
 </script>
 </body>
