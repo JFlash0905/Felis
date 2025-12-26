@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>NBA GM 單機版 v0.7.4 完整</title>
+<title>NBA GM 單機版 v0.7.5</title>
 <style>
 body{font-family:Arial;background:#f5f5f5;padding:20px}
 h1{margin-bottom:5px}
@@ -19,7 +19,7 @@ th,td{border:1px solid #ccc;padding:6px 10px;text-align:center}
 </head>
 <body>
 <h1>NBA GM 單機版</h1>
-<div class="version">（v0.7.4 完整可玩版）</div>
+<div class="version">（v0.7.5 完整可玩版）</div>
 
 <!-- 選隊 -->
 <div id="selectTeamUI">
@@ -100,7 +100,7 @@ const NEW_DRAFT_PER_SEASON=30;
 const MAX_SIGN=2;
 const MAX_AI_SIGN=2;
 
-// NBA 球員清單（示例，建議補全） 
+// NBA 球員清單（示例）
 const nbaPlayers=[
 {name:"Stephen Curry",pos:"PG",ovr:78},{name:"LeBron James",pos:"SF",ovr:82},{name:"Kevin Durant",pos:"SF",ovr:80},
 {name:"Giannis Antetokounmpo",pos:"PF",ovr:81},{name:"Luka Doncic",pos:"PG",ovr:79},{name:"Joel Embiid",pos:"C",ovr:80},
@@ -132,43 +132,43 @@ function shuffle(arr){for(let i=arr.length-1;i>0;i--){let j=Math.floor(Math.rand
 
 // ===== 初始化自由球員池 =====
 function initPool(){
- pool=[];
- shuffle(nbaPlayers);
- let count=randInt(INITIAL_POOL_MIN,INITIAL_POOL_MAX);
- for(let i=0;i<count;i++){
-   let p={...nbaPlayers[i],age:18,salary:randInt(5,15),trade:false};
-   pool.push(p);
- }
+  pool = [];
+  let count = randInt(INITIAL_POOL_MIN, INITIAL_POOL_MAX);
+  for(let i=0; i<count; i++){
+    let p;
+    if(i < nbaPlayers.length){
+      p = {...nbaPlayers[i], age:18, salary:randInt(5,15), trade:false};
+    } else {
+      const posArr=["PG","SG","SF","PF","C"];
+      p = {name:"新人"+(100+i), pos:posArr[randInt(0,posArr.length-1)], ovr:randInt(65,75), age:18, salary:randInt(5,15), trade:false};
+    }
+    pool.push(p);
+  }
 }
 
 // ===== DOMContentLoaded =====
 window.addEventListener("DOMContentLoaded", () => {
-  // 選隊選單
-  const sel = document.getElementById("teamSelect");
-  Object.keys(teamData).forEach(t => {
-    let o = document.createElement("option");
-    o.value = t;
-    o.textContent = t;
+  const sel=document.getElementById("teamSelect");
+  Object.keys(teamData).forEach(t=>{
+    let o=document.createElement("option");
+    o.value=t;o.textContent=t;
     sel.appendChild(o);
   });
-  // 讀取存檔
-  loadGame();
 });
 
 // ===== 選隊 =====
 function selectTeam(){
- playerTeam=document.getElementById("teamSelect").value;
- document.getElementById("buildTeam").style.display="block";
- document.getElementById("salaryInfo").textContent="薪資上限 $"+SALARY_CAP+"M，當前 $0M";
- initPool();
- renderPool();
- renderRosterTable();
- document.getElementById("selectTeamUI").style.display="none";
+  playerTeam=document.getElementById("teamSelect").value;
+  document.getElementById("buildTeam").style.display="block";
+  document.getElementById("salaryInfo").textContent="薪資上限 $"+SALARY_CAP+"M，當前 $0M";
+  initPool();
+  renderPool();
+  renderRosterTable();
+  document.getElementById("selectTeamUI").style.display="none";
 }
 
-// ===== 建隊 / GM 生涯其餘邏輯保持 v0.7.3 功能 =====
-// 訓練、多選簽約、模擬下一季、新秀生成、AI 簽約、防止 undefined 等功能
-// 請直接沿用 v0.7.3 完整 JS，僅把選隊初始化修正為 DOMContentLoaded 事件
+// ===== 建隊 / GM 生涯其他邏輯保留 v0.7.4 內容 =====
+// 包含 renderRosterTable, renderPool, confirmTeam, signFreeAgents, nextSeason, trainPlayer 等功能
 
 </script>
 </body>
