@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>NBA GM 單機版（更新 v0.6）</title>
+<title>NBA GM 單機版 v0.7</title>
 <style>
 body{font-family:Arial;background:#f5f5f5;padding:20px}
 h1{margin-bottom:5px}
@@ -10,16 +10,15 @@ h1{margin-bottom:5px}
 button{margin:4px;padding:6px 12px;cursor:pointer}
 table{border-collapse:collapse;background:#fff;margin-top:10px}
 th,td{border:1px solid #ccc;padding:6px 10px;text-align:center}
-#layout{display:flex;gap:20px}
-#panel{background:#fff;padding:10px;min-width:220px}
 .selected{background:#dff0ff}
 .trade{color:orange;font-weight:bold}
+#layout{display:flex;gap:20px}
+#panel{background:#fff;padding:10px;min-width:220px}
 </style>
 </head>
-
 <body>
 <h1>NBA GM 單機版</h1>
-<div class="version">（更新 v0.6｜建隊 + 養成 + 每季新秀）</div>
+<div class="version">（更新 v0.7｜建隊 + 正向訓練 + 新秀 + AI）</div>
 
 <h2>Step 1：選擇球隊</h2>
 <select id="teamSelect"></select>
@@ -34,8 +33,15 @@ th,td{border:1px solid #ccc;padding:6px 10px;text-align:center}
 </thead>
 <tbody></tbody>
 </table>
+<h3>當前選中隊伍</h3>
+<table id="rosterTable">
+<thead>
+<tr><th>球員</th><th>位置</th><th>OVR</th><th>薪資</th></tr>
+</thead>
+<tbody></tbody>
+</table>
+<div id="logBuild" style="margin-top:10px;background:#fff;padding:5px">選擇球員，注意薪資上限與隊伍人數！</div>
 <button onclick="confirmTeam()">確認隊伍</button>
-<div id="logBuild" style="margin-top:10px;background:#fff;padding:5px">選擇球員，注意薪資上限！</div>
 </div>
 
 <div id="game" style="display:none">
@@ -53,7 +59,7 @@ th,td{border:1px solid #ccc;padding:6px 10px;text-align:center}
 <div id="panel">
 <h3>球員操作</h3>
 <div id="playerInfo">請選擇球員</div>
-<button onclick="trainPlayer()">訓練（隨機）</button><br>
+<button onclick="trainPlayer()">訓練</button><br>
 <button onclick="toggleTrade()">標記為交易籌碼</button>
 <br><br>
 <button onclick="nextSeason()">模擬下一季</button>
@@ -65,42 +71,53 @@ th,td{border:1px solid #ccc;padding:6px 10px;text-align:center}
 </div>
 
 <script>
-console.log("NBA GM v0.6 LOADED");
-
-const SALARY_CAP=120; // 上限 $M
-const INITIAL_POOL_SIZE=50; // 自由球員池初始人數
+// ===== 設定 =====
+const SALARY_CAP=120;
+const MAX_PLAYERS=15;
+const INITIAL_POOL_MIN=30;
+const INITIAL_POOL_MAX=40;
 const NEW_DRAFT_PER_SEASON=30;
 
-const teamData = {
- Warriors:[],Lakers:[],Celtics:[],Nuggets:[],Bucks:[]
-};
+const nbaPlayers=[ // 範例：全 NBA 球員清單，18 歲版
+  {name:"Stephen Curry",pos:"PG",ovr:78},
+  {name:"LeBron James",pos:"SF",ovr:82},
+  {name:"Kevin Durant",pos:"SF",ovr:80},
+  {name:"Giannis Antetokounmpo",pos:"PF",ovr:81},
+  {name:"Luka Doncic",pos:"PG",ovr:79},
+  {name:"Joel Embiid",pos:"C",ovr:80},
+  {name:"Anthony Davis",pos:"PF",ovr:77},
+  {name:"Kawhi Leonard",pos:"SF",ovr:78},
+  {name:"James Harden",pos:"SG",ovr:79},
+  {name:"Jayson Tatum",pos:"SF",ovr:76},
+  // 可以補全全 NBA 名單
+];
+
+const teamData = {Warriors:[],Lakers:[],Celtics:[],Nuggets:[],Bucks:[]};
 
 let playerTeam=null;
 let roster=[];
 let pool=[];
+let aiTeams={};
 let selectedPoolIndex=null;
 let selectedRosterIndex=null;
 let currentSalary=0;
 
-// ===== 初始自由球員池 =====
-function generatePlayer(namePrefix){
- let pos=["PG","SG","SF","PF","C"];
- return {
-   name:namePrefix+Math.floor(Math.random()*100),
-   pos:pos[Math.floor(Math.random()*pos.length)],
-   ovr:Math.floor(Math.random()*19)+60,
-   age:18,
-   salary:Math.floor(Math.random()*6)+1,
-   trade:false
- };
-}
+// ===== 工具函數 =====
+function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+function shuffle(arr){for(let i=arr.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}}
 
+// ===== 初始化自由球員池 =====
 function initPool(){
  pool=[];
- for(let i=0;i<INITIAL_POOL_SIZE;i++) pool.push(generatePlayer("新人"));
+ shuffle(nbaPlayers);
+ let count=randInt(INITIAL_POOL_MIN,INITIAL_POOL_MAX);
+ for(let i=0;i<count;i++){
+   let p={...nbaPlayers[i],age:18,salary:randInt(5,15),trade:false};
+   pool.push(p);
+ }
 }
 
-// ===== 選隊 & 建隊 =====
+// ===== 選隊 =====
 const sel=document.getElementById("teamSelect");
 Object.keys(teamData).forEach(t=>{
  let o=document.createElement("option");
@@ -114,8 +131,10 @@ document.getElementById("buildTeam").style.display="block";
 document.getElementById("salaryInfo").textContent="薪資上限 $"+SALARY_CAP+"M，當前 $0M";
 initPool();
 renderPool();
+renderRosterTable();
 }
 
+// ===== 渲染自由球員池 =====
 function renderPool(){
  const tb=document.querySelector("#poolTable tbody");
  tb.innerHTML="";
@@ -123,21 +142,53 @@ function renderPool(){
   const tr=document.createElement("tr");
   if(i===selectedPoolIndex) tr.classList.add("selected");
   tr.innerHTML=`<td>${p.name}</td><td>${p.pos}</td><td>${p.ovr}</td><td>$${p.salary}M</td>`;
-  tr.onclick=()=>{selectedPoolIndex=i;highlightPool();};
+  tr.onclick=()=>{addToRoster(i)};
   tb.appendChild(tr);
  });
 }
 
-function highlightPool(){renderPool();}
+// ===== 加入 roster =====
+function addToRoster(i){
+ if(roster.length>=MAX_PLAYERS){alert("隊伍已滿");return;}
+ let p=pool[i];
+ if(currentSalary+p.salary>SALARY_CAP){alert("超過薪資上限");return;}
+ roster.push(p);
+ currentSalary+=p.salary;
+ pool.splice(i,1);
+renderPool();
+renderRosterTable();
+document.getElementById("salaryInfo").textContent=`薪資上限 $${SALARY_CAP}M，當前 $${currentSalary}M`;
+}
 
+// ===== 渲染 roster table 建隊階段 =====
+function renderRosterTable(){
+ const tb=document.querySelector("#rosterTable tbody");
+ tb.innerHTML="";
+ roster.forEach((p,i)=>{
+   const tr=document.createElement("tr");
+   tr.innerHTML=`<td>${p.name}</td><td>${p.pos}</td><td>${p.ovr}</td><td>$${p.salary}M</td>`;
+   tb.appendChild(tr);
+ });
+}
+
+// ===== 確認隊伍 =====
 function confirmTeam(){
- if(roster.length===0){alert("請選至少一名球員");return;}
+ // 分配剩餘球員給 AI
+ Object.keys(teamData).forEach(t=>{
+   if(t!==playerTeam){aiTeams[t]=[];}
+ });
+ pool.forEach(p=>{
+   let teams=Object.keys(aiTeams);
+   let t=teams[randInt(0,teams.length-1)];
+   aiTeams[t].push(p);
+ });
+ pool=[];
  document.getElementById("buildTeam").style.display="none";
  document.getElementById("game").style.display="block";
  document.getElementById("teamTitle").textContent="你是 "+playerTeam+" 的 GM";
-	saveGame();
-	renderRoster();
-	log("建隊完成！開始你的 GM 生涯");
+ renderRoster();
+ log("建隊完成！開始你的 GM 生涯");
+ saveGame();
 }
 
 // ===== GM 生涯 =====
@@ -152,45 +203,45 @@ function renderRoster(){
   tb.appendChild(tr);
  });
 }
-
 function highlightRoster(){renderRoster();}
-
-function selectPlayer(i){selectedRosterIndex=i;renderRoster();}
-
 function trainPlayer(){
  if(selectedRosterIndex===null){alert("請先選球員");return;}
- const p=roster[selectedRosterIndex];
+ let p=roster[selectedRosterIndex];
  let gain=0;
- if(p.age<=24) gain=Math.random()<0.7?1:0;
- else if(p.age<=30) gain=Math.random()<0.4?1:0;
- else gain=Math.random()<0.2?0:-1;
- p.ovr=Math.max(60,p.ovr+gain);
- log(`${p.name} 訓練結果：${gain>=0?"+":""}${gain}`);
+ if(p.age<=24) gain=randInt(1,3);
+ else if(p.age<=29) gain=randInt(0,2);
+ else gain=randInt(0,1);
+ p.ovr=Math.min(99,p.ovr+gain);
+ log(`${p.name} 訓練成長：+${gain} OVR`);
  renderRoster();
-	saveGame();
+ saveGame();
 }
-
 function toggleTrade(){
  if(selectedRosterIndex===null){alert("請先選球員");return;}
  const p=roster[selectedRosterIndex];
  p.trade=!p.trade;
  log(`${p.name} ${p.trade?"已":"取消"}列入交易名單`);
  renderRoster();
-	saveGame();
+ saveGame();
 }
 
 // ===== 季度流程 =====
 function nextSeason(){
  roster.forEach(p=>p.age++);
  addNewDraft();
-	log("新賽季開始！新增新秀已加入自由球員池");
-	renderRoster();
-	saveGame();
+ log("新賽季開始！新增新秀已加入自由球員池");
+ renderRoster();
+ saveGame();
 }
 
 function addNewDraft(){
- for(let i=0;i<NEW_DRAFT_PER_SEASON;i++) pool.push(generatePlayer("新人"));
-	renderPool();
+ let availablePlayers=nbaPlayers.filter(p=>!roster.some(r=>r.name===p.name)&&!Object.values(aiTeams).flat().some(r=>r.name===p.name));
+ shuffle(availablePlayers);
+ for(let i=0;i<NEW_DRAFT_PER_SEASON;i++){
+   let np={...availablePlayers[i%availablePlayers.length],age:18,salary:randInt(5,15),trade:false};
+   pool.push(np);
+ }
+ renderPool();
 }
 
 // ===== 存檔 / 讀檔 =====
@@ -198,29 +249,39 @@ function saveGame(){
  localStorage.setItem("NBA_GM_roster",JSON.stringify(roster));
  localStorage.setItem("NBA_GM_pool",JSON.stringify(pool));
  localStorage.setItem("NBA_GM_team",playerTeam);
+ localStorage.setItem("NBA_GM_aiTeams",JSON.stringify(aiTeams));
 }
 
 function loadGame(){
  const r=localStorage.getItem("NBA_GM_roster");
  const p=localStorage.getItem("NBA_GM_pool");
  const t=localStorage.getItem("NBA_GM_team");
- if(r&&p&&t){
+ const a=localStorage.getItem("NBA_GM_aiTeams");
+ if(r&&p&&t&&a){
   roster=JSON.parse(r);
   pool=JSON.parse(p);
   playerTeam=t;
+  aiTeams=JSON.parse(a);
   document.getElementById("buildTeam").style.display="none";
   document.getElementById("game").style.display="block";
   document.getElementById("teamTitle").textContent="你是 "+playerTeam+" 的 GM";
-  renderRoster();renderPool();
+  renderRoster();renderPool();renderRosterTable();
   log("讀取存檔完成！");
  }
 }
 
+// ===== 重啟 =====
 function restartGame(){
  if(confirm("確定要刪除存檔並重啟生涯嗎？")){
   localStorage.clear();
   location.reload();
  }
+}
+
+// ===== 日誌 =====
+function log(msg){
+ const l=document.getElementById("log");
+ l.textContent=msg;
 }
 
 // ===== 初始化 =====
