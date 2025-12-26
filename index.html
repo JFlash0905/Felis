@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>NBA GM v0.8 完整</title>
+<title>NBA GM v0.8.2</title>
 <style>
 body{font-family:Arial;background:#f5f5f5;padding:20px}
 h1{margin-bottom:5px}
@@ -11,21 +11,20 @@ button{margin:4px;padding:6px 12px;cursor:pointer}
 table{border-collapse:collapse;background:#fff;margin-top:10px}
 th,td{border:1px solid #ccc;padding:6px 10px;text-align:center}
 .selected{background:#dff0ff}
-.trade{color:orange;font-weight:bold}
 #layout{display:flex;gap:20px}
 #panel{background:#fff;padding:10px;min-width:220px}
 #aiPanel{background:#fff;padding:10px;margin-top:10px;display:none}
 </style>
 </head>
 <body>
-<h1>NBA GM v0.8 完整</h1>
-<div class="version">（打開就能玩，永遠不會空池）</div>
+<h1>NBA GM v0.8.2</h1>
+<div class="version">（打開就能玩，全 NBA 球員建隊）</div>
 
 <!-- 選隊 -->
 <div id="selectTeamUI">
 <h2>Step 1：選擇球隊</h2>
 <select id="teamSelect"></select>
-<button onclick="selectTeam()">開始 GM 生涯</button>
+<button id="startBtn">開始 GM 生涯</button>
 </div>
 
 <!-- 建隊階段 -->
@@ -133,17 +132,10 @@ function shuffle(arr){for(let i=arr.length-1;i>0;i--){let j=Math.floor(Math.rand
 // ===== 初始化自由球員池 =====
 function initPool(){
   pool = [];
-  let count = randInt(INITIAL_POOL_MIN, INITIAL_POOL_MAX);
-  for(let i=0; i<count; i++){
-    let p;
-    if(i < nbaPlayers.length){
-      p = {...nbaPlayers[i], age:18, salary:randInt(5,15), trade:false};
-    } else {
-      const posArr=["PG","SG","SF","PF","C"];
-      p = {name:"新人"+(100+i), pos:posArr[randInt(0,posArr.length-1)], ovr:randInt(65,75), age:18, salary:randInt(5,15), trade:false};
-    }
-    pool.push(p);
-  }
+  shuffle(nbaPlayers);
+  nbaPlayers.forEach(p=>{
+    pool.push({...p, age:18, salary:randInt(5,15), trade:false});
+  });
 }
 
 // ===== 初始化選隊選單 =====
@@ -154,6 +146,7 @@ window.addEventListener("DOMContentLoaded", () => {
     o.value=t;o.textContent=t;
     sel.appendChild(o);
   });
+  document.getElementById("startBtn").addEventListener("click",selectTeam);
 });
 
 // ===== 選隊 =====
@@ -162,22 +155,54 @@ function selectTeam(){
   document.getElementById("teamTitle").textContent="你是 "+playerTeam+" 的 GM";
   document.getElementById("buildTeam").style.display="block";
   document.getElementById("salaryInfo").textContent="薪資上限 $"+SALARY_CAP+"M，當前 $0M";
+  document.getElementById("selectTeamUI").style.display="none"; // 自動隱藏選隊 UI
   initPool();
   renderPool();
 }
 
-// ===== 渲染 pool =====
+// ===== 渲染 pool 並綁點擊 =====
 function renderPool(){
   const tb=document.getElementById("poolTable").querySelector("tbody");
   tb.innerHTML="";
-  pool.forEach(p=>{
+  pool.forEach((p,index)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${p.name}</td><td>${p.pos}</td><td>${p.ovr}</td><td>$${p.salary}M</td>`;
+    tr.addEventListener("click",()=>addToRoster(index));
+    tb.appendChild(tr);
+  });
+}
+
+// ===== 加入 roster =====
+function addToRoster(index){
+  const p=pool[index];
+  if(currentSalary+p.salary>SALARY_CAP){alert("超過薪資上限！");return;}
+  if(roster.length>=MAX_PLAYERS){alert("球隊人數已滿！");return;}
+  roster.push(p);
+  currentSalary+=p.salary;
+  pool.splice(index,1);
+  renderRosterTable();
+  renderPool();
+  document.getElementById("salaryInfo").textContent="薪資上限 $"+SALARY_CAP+"M，當前 $"+currentSalary+"M";
+}
+
+// ===== 渲染 roster =====
+function renderRosterTable(){
+  const tb=document.getElementById("rosterTable").querySelector("tbody");
+  tb.innerHTML="";
+  roster.forEach(p=>{
     const tr=document.createElement("tr");
     tr.innerHTML=`<td>${p.name}</td><td>${p.pos}</td><td>${p.ovr}</td><td>$${p.salary}M</td>`;
     tb.appendChild(tr);
   });
 }
 
-// ===== 其他功能 v0.7.5 邏輯可以接續 =====
+// ===== 確認隊伍 =====
+function confirmTeam(){
+  alert("隊伍建立完成！");
+  document.getElementById("buildTeam").style.display="none";
+  document.getElementById("game").style.display="block";
+  // 後續自由球員池 / AI 分配可在這裡初始化
+}
 </script>
 </body>
 </html>
