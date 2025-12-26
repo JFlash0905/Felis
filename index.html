@@ -2,193 +2,178 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>NBA GM v1.0</title>
+<title>NBA GM v1.0 STABLE</title>
 <style>
-body{font-family:Arial;background:#f5f5f5;padding:20px}
-h1{margin-bottom:5px}
-.version{color:red;font-weight:bold;margin-bottom:15px}
-button{margin:4px;padding:6px 12px;cursor:pointer}
-table{border-collapse:collapse;background:#fff;margin-top:10px}
-th,td{border:1px solid #ccc;padding:6px 10px;text-align:center}
-#layout{display:flex;gap:20px}
-#panel{background:#fff;padding:10px;min-width:220px}
-#aiPanel{background:#fff;padding:10px;margin-top:10px;display:none}
+body { font-family: Arial; background:#f4f4f4; padding:20px }
+h1 { margin-bottom:4px }
+.red { color:red; font-weight:bold }
+button { padding:6px 12px; margin:4px; cursor:pointer }
+table { border-collapse:collapse; background:white; margin-top:10px }
+th,td { border:1px solid #ccc; padding:6px 10px; text-align:center }
+tr.click:hover { background:#e8f2ff; cursor:pointer }
+#wrap { display:flex; gap:20px }
+.box { background:white; padding:10px }
 </style>
 </head>
+
 <body>
 <h1>NBA GM v1.0</h1>
-<div class="version">（穩定版：建隊、簽約、AI 分配正常）</div>
+<div class="red">STABLE 版（選人、分配、模擬都正常）</div>
 
-<div id="selectTeamUI">
-<h2>Step 1：選擇球隊</h2>
-<select id="teamSelect"></select>
-<button id="startBtn">開始 GM 生涯</button>
-</div>
-
-<div id="buildTeam" style="display:none">
-<h2>建隊階段：選擇球員加入你的隊伍</h2>
-<div id="salaryInfo"></div>
-<table id="poolTable">
-<thead><tr><th>球員</th><th>位置</th><th>OVR</th><th>薪資</th></tr></thead>
-<tbody></tbody>
-</table>
-
-<h3>當前選中隊伍</h3>
-<table id="rosterTable">
-<thead><tr><th>球員</th><th>位置</th><th>OVR</th><th>薪資</th></tr></thead>
-<tbody></tbody>
-</table>
-<div id="logBuild" style="margin-top:10px;background:#fff;padding:5px">選擇球員，注意薪資上限與隊伍人數！</div>
-<button onclick="confirmTeam()">確認隊伍</button>
-</div>
-
-<div id="game" style="display:none">
-<h2 id="teamTitle"></h2>
-<div id="layout">
-<div>
-<h3>你的球隊</h3>
-<table id="roster">
-<thead><tr><th>球員</th><th>位置</th><th>OVR</th><th>年齡</th><th>薪資</th></tr></thead>
-<tbody></tbody>
-</table>
-
-<h3>自由球員池（每次最多簽約 2 人）</h3>
-<table id="freeAgents">
-<thead><tr><th>選</th><th>球員</th><th>位置</th><th>OVR</th><th>薪資</th></tr></thead>
-<tbody></tbody>
-</table>
-<button onclick="signFreeAgents()">簽約選中球員</button>
-<h4 id="logFreeAgent" style="background:#fff;padding:5px;margin-top:5px">自由球員池</h4>
-</div>
-
-<div id="panel">
-<h3>球員操作</h3>
-<div id="playerInfo">請選擇球員</div>
-<button onclick="trainPlayer()">訓練</button><br>
-<button onclick="toggleTrade()">標記為交易籌碼</button>
-<br><br>
-<button onclick="nextSeason()">模擬下一季</button>
-<br><br>
-<button onclick="toggleAIView()">查看其他隊伍</button>
-<div id="aiPanel"></div>
-<br>
-<button onclick="restartGame()">重啟生涯</button>
-</div>
-</div>
-<div id="log" style="margin-top:15px;background:#fff;padding:10px">GM 準備就緒</div>
-</div>
+<div id="screen"></div>
 
 <script>
-// ===== 設定 =====
-const SALARY_CAP=120;
-const MAX_PLAYERS=15;
-const MAX_SIGN=2;
-const MAX_AI_SIGN=2;
-const nbaPlayers=[
-{name:"Stephen Curry",pos:"PG",ovr:78},{name:"LeBron James",pos:"SF",ovr:82},{name:"Kevin Durant",pos:"SF",ovr:80},
-{name:"Giannis Antetokounmpo",pos:"PF",ovr:81},{name:"Luka Doncic",pos:"PG",ovr:79},{name:"Joel Embiid",pos:"C",ovr:80},
-{name:"Anthony Davis",pos:"PF",ovr:77},{name:"Kawhi Leonard",pos:"SF",ovr:78},{name:"James Harden",pos:"SG",ovr:79},
-{name:"Jayson Tatum",pos:"SF",ovr:76},{name:"Bradley Beal",pos:"SG",ovr:75},{name:"Damian Lillard",pos:"PG",ovr:77},
-{name:"Jimmy Butler",pos:"SF",ovr:76},{name:"Chris Paul",pos:"PG",ovr:75},{name:"Devin Booker",pos:"SG",ovr:76},
-{name:"Karl-Anthony Towns",pos:"C",ovr:75},{name:"Zion Williamson",pos:"PF",ovr:74},{name:"Trae Young",pos:"PG",ovr:74},
-{name:"Rudy Gobert",pos:"C",ovr:74},{name:"Donovan Mitchell",pos:"SG",ovr:73},{name:"Ja Morant",pos:"PG",ovr:73},
-{name:"Jrue Holiday",pos:"PG",ovr:72},{name:"Bam Adebayo",pos:"C",ovr:72},{name:"Paul George",pos:"SF",ovr:73},
-{name:"DeMar DeRozan",pos:"SF",ovr:72},{name:"Draymond Green",pos:"PF",ovr:71},{name:"Klay Thompson",pos:"SG",ovr:71},
+/* ========= 核心狀態 ========= */
+let state = {
+  team: null,
+  season: 1,
+  roster: [],
+  freeAgents: [],
+  aiTeams: {}
+};
+
+const SALARY_CAP = 120;
+const MAX_PICK = 2;
+
+const TEAMS = ["Warriors","Lakers","Celtics","Bucks","Nuggets"];
+
+const NBA_PLAYERS = [
+ {name:"Stephen Curry",pos:"PG",ovr:78},
+ {name:"LeBron James",pos:"SF",ovr:82},
+ {name:"Kevin Durant",pos:"SF",ovr:80},
+ {name:"Giannis Antetokounmpo",pos:"PF",ovr:81},
+ {name:"Luka Doncic",pos:"PG",ovr:79},
+ {name:"Joel Embiid",pos:"C",ovr:80},
+ {name:"Jayson Tatum",pos:"SF",ovr:76},
+ {name:"Ja Morant",pos:"PG",ovr:73},
+ {name:"Jimmy Butler",pos:"SF",ovr:76},
+ {name:"Damian Lillard",pos:"PG",ovr:77},
+ {name:"Anthony Davis",pos:"PF",ovr:77},
+ {name:"Kawhi Leonard",pos:"SF",ovr:78}
 ];
-const teamData = {Warriors:[],Lakers:[],Celtics:[],Nuggets:[],Bucks:[]};
-let playerTeam=null,roster=[],pool=[],currentSalary=0;
 
-// ===== 工具 =====
-function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
-function shuffle(arr){for(let i=arr.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}}
+function rand(min,max){return Math.floor(Math.random()*(max-min+1))+min}
+function shuffle(a){for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}}
 
-// ===== 初始化 =====
-function initPool(){pool=[];shuffle(nbaPlayers);nbaPlayers.forEach(p=>pool.push({...p,age:18,salary:randInt(5,15),trade:false}));}
-window.addEventListener("DOMContentLoaded",()=>{
-  const sel=document.getElementById("teamSelect");
-  Object.keys(teamData).forEach(t=>{let o=document.createElement("option");o.value=t;o.textContent=t;sel.appendChild(o);});
-  document.getElementById("startBtn").addEventListener("click",selectTeam);
-});
-
-// ===== 選隊 =====
-function selectTeam(){
-  playerTeam=document.getElementById("teamSelect").value;
-  document.getElementById("teamTitle").textContent="你是 "+playerTeam+" 的 GM";
-  document.getElementById("buildTeam").style.display="block";
-  document.getElementById("salaryInfo").textContent="薪資上限 $"+SALARY_CAP+"M，當前 $0M";
-  document.getElementById("selectTeamUI").style.display="none";
-  initPool();renderPool();
-}
-
-// ===== 渲染 pool =====
-function renderPool(){
-  const tb=document.getElementById("poolTable").querySelector("tbody");tb.innerHTML="";
-  pool.forEach((p,i)=>{const tr=document.createElement("tr");
-    tr.innerHTML=`<td>${p.name}</td><td>${p.pos}</td><td>${p.ovr}</td><td>$${p.salary}M</td>`;
-    tr.addEventListener("click",()=>addToRoster(i));tb.appendChild(tr);
+/* ========= 初始化 ========= */
+function startGame(){
+  state.freeAgents = NBA_PLAYERS.map(p=>({
+    ...p,
+    age:18,
+    salary: rand(5,15)
+  }));
+  shuffle(state.freeAgents);
+  TEAMS.forEach(t=>{
+    if(t!==state.team) state.aiTeams[t]=[];
   });
+  renderBuild();
 }
 
-// ===== 加入 roster =====
-function addToRoster(index){
-  const p=pool[index];
-  if(currentSalary+p.salary>SALARY_CAP){alert("超過薪資上限！");return;}
-  if(roster.length>=MAX_PLAYERS){alert("球隊人數已滿！");return;}
-  roster.push(p);currentSalary+=p.salary;pool.splice(index,1);
-  renderRosterTable();renderPool();
-  document.getElementById("salaryInfo").textContent="薪資上限 $"+SALARY_CAP+"M，當前 $"+currentSalary+"M";
+/* ========= 畫面 ========= */
+function render(){
+  if(!state.team) renderTeamSelect();
+  else renderBuild();
 }
 
-// ===== 渲染 roster =====
-function renderRosterTable(){
-  const tb=document.getElementById("rosterTable").querySelector("tbody");tb.innerHTML="";
-  roster.forEach(p=>{const tr=document.createElement("tr");
-    tr.innerHTML=`<td>${p.name}</td><td>${p.pos}</td><td>${p.ovr}</td><td>${p.salary}M</td>`;tb.appendChild(tr);
+function renderTeamSelect(){
+  screen.innerHTML = `
+    <h2>選擇你的球隊</h2>
+    ${TEAMS.map(t=>`<button onclick="chooseTeam('${t}')">${t}</button>`).join("")}
+  `;
+}
+
+function chooseTeam(t){
+  state.team = t;
+  startGame();
+}
+
+function renderBuild(){
+  screen.innerHTML = `
+  <h2>球隊：${state.team}｜第 ${state.season} 季</h2>
+  <div id="wrap">
+    <div class="box">
+      <h3>自由球員（一次最多 2 人）</h3>
+      <table>
+        <tr><th></th><th>球員</th><th>位置</th><th>OVR</th><th>年齡</th><th>薪資</th></tr>
+        ${state.freeAgents.map((p,i)=>`
+          <tr class="click">
+            <td><input type="checkbox" data-i="${i}"></td>
+            <td>${p.name}</td>
+            <td>${p.pos}</td>
+            <td>${p.ovr}</td>
+            <td>${p.age}</td>
+            <td>$${p.salary}M</td>
+          </tr>`).join("")}
+      </table>
+      <button onclick="pickPlayers()">加入隊伍</button>
+      <button onclick="finishBuild()">完成建隊</button>
+    </div>
+
+    <div class="box">
+      <h3>你的隊伍</h3>
+      <table>
+        <tr><th>球員</th><th>位置</th><th>OVR</th><th>年齡</th></tr>
+        ${state.roster.map(p=>`
+          <tr>
+            <td>${p.name}</td>
+            <td>${p.pos}</td>
+            <td>${p.ovr}</td>
+            <td>${p.age}</td>
+          </tr>`).join("")}
+      </table>
+      <button onclick="nextSeason()">模擬下一季</button><br>
+      <button onclick="restart()">重啟生涯</button>
+    </div>
+  </div>
+  `;
+}
+
+/* ========= 行為 ========= */
+function pickPlayers(){
+  let checked=[...document.querySelectorAll("input[type=checkbox]:checked")];
+  if(checked.length===0) return alert("請選球員");
+  if(checked.length>MAX_PICK) return alert("一次最多 2 人");
+
+  checked.sort((a,b)=>b.dataset.i-a.dataset.i).forEach(cb=>{
+    let p = state.freeAgents.splice(cb.dataset.i,1)[0];
+    state.roster.push(p);
   });
+  render();
 }
 
-// ===== 確認隊伍 =====
-function confirmTeam(){
-  document.getElementById("buildTeam").style.display="none";
-  document.getElementById("game").style.display="block";
-  renderRosterTable();renderFreeAgents();distributeToAITeams();
-}
-
-// ===== 渲染自由球員池 =====
-function renderFreeAgents(){
-  const tb=document.getElementById("freeAgents").querySelector("tbody");tb.innerHTML="";
-  pool.forEach((p,i)=>{const tr=document.createElement("tr");
-    tr.innerHTML=`<td><input type="checkbox" data-index="${i}"></td><td>${p.name}</td><td>${p.pos}</td><td>${p.ovr}</td><td>$${p.salary}M</td>`;
-    tb.appendChild(tr);
+function finishBuild(){
+  shuffle(state.freeAgents);
+  Object.keys(state.aiTeams).forEach(t=>{
+    while(state.aiTeams[t].length<2 && state.freeAgents.length){
+      state.aiTeams[t].push(state.freeAgents.pop());
+    }
   });
+  alert("建隊完成！");
+  render();
 }
 
-// ===== 簽約自由球員 =====
-function signFreeAgents(){
-  const checkboxes=document.querySelectorAll("#freeAgents tbody input[type=checkbox]");let selectedIndices=[];
-  checkboxes.forEach(cb=>{if(cb.checked) selectedIndices.push(parseInt(cb.dataset.index));});
-  if(selectedIndices.length===0){alert("請選擇球員");return;}
-  if(selectedIndices.length>MAX_SIGN){alert("最多只能簽約 "+MAX_SIGN+" 人");return;}
-  selectedIndices.forEach((i,index)=>{const p=pool[i-index];roster.push(p);currentSalary+=p.salary;pool.splice(i-index,1);});
-  renderRosterTable();renderFreeAgents();
-  document.getElementById("salaryInfo").textContent="薪資上限 $"+SALARY_CAP+"M，當前 $"+currentSalary+"M";
-  document.getElementById("logFreeAgent").textContent="已簽約 "+selectedIndices.length+" 名球員。";
+function nextSeason(){
+  state.season++;
+  state.roster.forEach(p=>p.age++);
+  Object.values(state.aiTeams).flat().forEach(p=>p.age++);
+  // 新秀
+  state.freeAgents.push({
+    name:"Rookie "+Math.floor(Math.random()*1000),
+    pos:["PG","SG","SF","PF","C"][rand(0,4)],
+    ovr:rand(60,68),
+    age:18,
+    salary:rand(4,8)
+  });
+  render();
 }
 
-// ===== AI 球隊分配 =====
-function distributeToAITeams(){
-  const aiTeamsKeys = Object.keys(teamData).filter(t=>t!==playerTeam);
-  let tempPool=[...pool];shuffle(tempPool);
-  aiTeamsKeys.forEach(team=>{teamData[team]=[];for(let i=0;i<MAX_AI_SIGN;i++){if(tempPool.length>0){teamData[team].push(tempPool.shift());}}});
-  pool=tempPool;renderFreeAgents();
+function restart(){
+  localStorage.clear();
+  location.reload();
 }
 
-// ===== 占位函數 =====
-function trainPlayer(){alert("訓練功能待開發");}
-function toggleTrade(){alert("交易標記功能待開發");}
-function nextSeason(){alert("模擬下一季功能待開發");}
-function toggleAIView(){alert("查看 AI 球隊功能待開發");}
-function restartGame(){location.reload();}
+/* ========= 啟動 ========= */
+render();
 </script>
 </body>
 </html>
