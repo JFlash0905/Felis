@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>NBA GM 單機版 v0.7.1</title>
+<title>NBA GM 單機版 v0.7.2</title>
 <style>
 body{font-family:Arial;background:#f5f5f5;padding:20px}
 h1{margin-bottom:5px}
@@ -19,7 +19,7 @@ th,td{border:1px solid #ccc;padding:6px 10px;text-align:center}
 </head>
 <body>
 <h1>NBA GM 單機版</h1>
-<div class="version">（更新 v0.7.1｜建隊 + AI分配 + 新秀簽約 + 查看隊伍）</div>
+<div class="version">（v0.7.2｜新秀簽約限制 + 完全防呆）</div>
 
 <!-- 選隊 -->
 <div id="selectTeamUI">
@@ -62,7 +62,7 @@ th,td{border:1px solid #ccc;padding:6px 10px;text-align:center}
 <tbody></tbody>
 </table>
 
-<h3>自由球員池（可簽約）</h3>
+<h3>自由球員池（簽約新秀，每季最多 2 人）</h3>
 <table id="freeAgents">
 <thead>
 <tr><th>球員</th><th>位置</th><th>OVR</th><th>薪資</th></tr>
@@ -70,9 +70,7 @@ th,td{border:1px solid #ccc;padding:6px 10px;text-align:center}
 <tbody></tbody>
 </table>
 <button onclick="signFreeAgent()">簽約選中球員</button>
-
-<h3 id="logFreeAgent" style="background:#fff;padding:5px;margin-top:5px">自由球員池</h3>
-
+<h4 id="logFreeAgent" style="background:#fff;padding:5px;margin-top:5px">自由球員池</h4>
 </div>
 
 <div id="panel">
@@ -99,6 +97,8 @@ const MAX_PLAYERS=15;
 const INITIAL_POOL_MIN=30;
 const INITIAL_POOL_MAX=40;
 const NEW_DRAFT_PER_SEASON=30;
+const MAX_SIGN=2;
+const MAX_AI_SIGN=2;
 
 // NBA 球員清單（18歲版示例）
 const nbaPlayers=[
@@ -125,6 +125,7 @@ let selectedRosterIndex=null;
 let selectedFreeAgentIndex=null;
 let currentSalary=0;
 let aiView=false;
+let signedThisSeason=0;
 
 // ===== 工具函數 =====
 function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
@@ -164,18 +165,32 @@ function renderPool(){
  const tb=document.querySelector("#poolTable tbody");
  tb.innerHTML="";
  pool.forEach((p,i)=>{
-  if(!p) return;
+  if(!p || !p.name) return; // 防呆
   const tr=document.createElement("tr");
   tr.innerHTML=`<td>${p.name}</td><td>${p.pos}</td><td>${p.ovr}</td><td>$${p.salary}M</td>`;
   tr.onclick=()=>{addToRoster(i)};
   tb.appendChild(tr);
  });
 }
+function renderFreeAgents(){
+ const tb=document.querySelector("#freeAgents tbody");
+ tb.innerHTML="";
+ pool.forEach((p,i)=>{
+   if(!p || !p.name) return;
+   const tr=document.createElement("tr");
+   if(i===selectedFreeAgentIndex) tr.classList.add("selected");
+   tr.innerHTML=`<td>${p.name}</td><td>${p.pos}</td><td>${p.ovr}</td><td>$${p.salary}M</td>`;
+   tr.onclick=()=>{selectedFreeAgentIndex=i;highlightFreeAgent();};
+   tb.appendChild(tr);
+ });
+}
+function highlightFreeAgent(){renderFreeAgents();}
 
-// ===== 加入 roster =====
+// ===== 建隊加入 roster =====
 function addToRoster(i){
  if(roster.length>=MAX_PLAYERS){alert("隊伍已滿");return;}
  let p=pool[i];
+ if(!p || !p.name) return; // 防呆
  if(currentSalary+p.salary>SALARY_CAP){alert("超過薪資上限");return;}
  roster.push(p);
  currentSalary+=p.salary;
@@ -190,7 +205,7 @@ function renderRosterTable(){
  const tb=document.querySelector("#rosterTable tbody");
  tb.innerHTML="";
  roster.forEach((p,i)=>{
-   if(!p) return;
+   if(!p || !p.name) return;
    const tr=document.createElement("tr");
    tr.innerHTML=`<td>${p.name}</td><td>${p.pos}</td><td>${p.ovr}</td><td>$${p.salary}M</td>`;
    tb.appendChild(tr);
@@ -202,12 +217,19 @@ function confirmTeam(){
  Object.keys(teamData).forEach(t=>{
    if(t!==playerTeam){aiTeams[t]=[];}
  });
+ // 分配剩餘球員給 AI，每隊最多 2 個
  pool.forEach(p=>{
+   if(!p || !p.name) return;
    let teams=Object.keys(aiTeams);
    let t=teams[randInt(0,teams.length-1)];
-   aiTeams[t].push(p);
+   if(aiTeams[t].length<MAX_AI_SIGN){
+     aiTeams[t].push(p);
+   } else {
+     // 保留到下一季
+   }
  });
- pool=[];
+ // 移除已分配的
+ pool = pool.filter(p => !Object.values(aiTeams).flat().includes(p));
  document.getElementById("buildTeam").style.display="none";
  document.getElementById("game").style.display="block";
  document.getElementById("teamTitle").textContent="你是 "+playerTeam+" 的 GM";
@@ -222,7 +244,7 @@ function renderRoster(){
  const tb=document.querySelector("#roster tbody");
  tb.innerHTML="";
  roster.forEach((p,i)=>{
-  if(!p) return;
+  if(!p || !p.name) return;
   const tr=document.createElement("tr");
   if(i===selectedRosterIndex) tr.classList.add("selected");
   tr.innerHTML=`<td>${p.name}${p.trade?" <span class='trade'>TRADE</span>":""}</td><td>${p.pos}</td><td>${p.ovr}</td><td>${p.age}</td><td>$${p.salary}M</td>`;
@@ -256,38 +278,40 @@ function toggleTrade(){
  saveGame();
 }
 
-// ===== 自由球員池 GM 生涯 =====
-function renderFreeAgents(){
- const tb=document.querySelector("#freeAgents tbody");
- tb.innerHTML="";
- pool.forEach((p,i)=>{
-   if(!p) return;
-   const tr=document.createElement("tr");
-   if(i===selectedFreeAgentIndex) tr.classList.add("selected");
-   tr.innerHTML=`<td>${p.name}</td><td>${p.pos}</td><td>${p.ovr}</td><td>$${p.salary}M</td>`;
-   tr.onclick=()=>{selectedFreeAgentIndex=i;highlightFreeAgent();};
-   tb.appendChild(tr);
- });
-}
-function highlightFreeAgent(){renderFreeAgents();}
+// ===== 簽約新秀（最多 2 個）=====
 function signFreeAgent(){
  if(selectedFreeAgentIndex===null){alert("請先選球員");return;}
- if(roster.length>=MAX_PLAYERS){alert("隊伍已滿");return;}
+ if(signedThisSeason>=MAX_SIGN){alert("你本季最多簽2個新秀");return;}
  let p=pool[selectedFreeAgentIndex];
+ if(!p || !p.name) return;
+ if(roster.length>=MAX_PLAYERS){alert("隊伍已滿");return;}
  if(currentSalary+p.salary>SALARY_CAP){alert("超過薪資上限");return;}
  roster.push(p);
  currentSalary+=p.salary;
  pool.splice(selectedFreeAgentIndex,1);
  selectedFreeAgentIndex=null;
- renderRoster();
- renderFreeAgents();
- document.getElementById("logFreeAgent").textContent="簽約完成！";
+ signedThisSeason++;
+ // AI 自動簽新秀，最多 2 個/隊
+ Object.keys(aiTeams).forEach(t=>{
+   let added=0;
+   for(let i=0;i<pool.length && added<MAX_AI_SIGN;i++){
+     let np=pool[i];
+     if(!np || !np.name) continue;
+     aiTeams[t].push(np);
+     pool.splice(i,1);
+     added++;
+     i--;
+   }
+ });
+ renderRoster(); renderFreeAgents();
+ log("簽約完成，本季可簽新秀剩餘數："+(MAX_SIGN-signedThisSeason));
  saveGame();
 }
 
 // ===== 季度流程 =====
 function nextSeason(){
  roster.forEach(p=>p.age++);
+ signedThisSeason=0;
  addNewDraft();
  log("新賽季開始！新增新秀已加入自由球員池");
  renderRoster();
@@ -296,7 +320,7 @@ function nextSeason(){
 }
 
 function addNewDraft(){
- let availablePlayers=nbaPlayers.filter(p=>!roster.some(r=>r.name===p.name)&&!Object.values(aiTeams).flat().some(r=>r.name===p.name));
+ let availablePlayers=nbaPlayers.filter(p=>!roster.some(r=>r.name===p.name)&&!Object.values(aiTeams).flat().some(r=>r.name===p.name)&&!pool.some(r=>r.name===p.name));
  shuffle(availablePlayers);
  for(let i=0;i<NEW_DRAFT_PER_SEASON;i++){
    let np={...availablePlayers[i%availablePlayers.length],age:18,salary:randInt(5,15),trade:false};
@@ -313,7 +337,7 @@ function toggleAIView(){
    Object.keys(aiTeams).forEach(t=>{
      html+=`<h4>${t}</h4><table border=1><tr><th>球員</th><th>位置</th><th>OVR</th><th>薪資</th></tr>`;
      aiTeams[t].forEach(p=>{
-       if(!p) return;
+       if(!p || !p.name) return;
        html+=`<tr><td>${p.name}</td><td>${p.pos}</td><td>${p.ovr}</td><td>$${p.salary}M</td></tr>`;
      });
      html+="</table>";
