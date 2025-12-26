@@ -2,12 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>NBA GM Simulator v0.8</title>
+<title>NBA GM Simulator v0.9</title>
 <style>
-body { font-family: Arial, sans-serif; background: #f4f4f4; margin:0; padding:0; }
-#screen { padding: 20px; }
-button { margin: 2px; padding:5px 10px; }
-section { margin-bottom: 20px; }
+body { font-family: Arial, sans-serif; background: #f0f2f5; margin:0; padding:0; }
+#screen { padding: 20px; max-width: 800px; margin:auto; }
+button { margin: 3px; padding:5px 10px; }
+section { margin-bottom: 20px; background:#fff; padding:10px; border-radius:5px; box-shadow:0 2px 5px rgba(0,0,0,0.1);}
+h2 { margin-top:0; }
+select { padding:5px; margin-right:5px; }
 </style>
 </head>
 <body>
@@ -26,6 +28,7 @@ const NBA_TEAMS = [
   "Utah Jazz","Washington Wizards"
 ];
 
+// 擴張球員池（示範，實際可加入更多冷門球員）
 const REAL_NBA_PLAYERS = [
   { name: "Stephen Curry", pos: "PG", baseOvr: 88 },
   { name: "LeBron James", pos: "SF", baseOvr: 90 },
@@ -36,7 +39,17 @@ const REAL_NBA_PLAYERS = [
   { name: "Klay Thompson", pos: "SG", baseOvr: 84 },
   { name: "Jimmy Butler", pos: "SF", baseOvr: 86 },
   { name: "Jrue Holiday", pos: "PG", baseOvr: 83 },
-  { name: "Brook Lopez", pos: "C", baseOvr: 81 }
+  { name: "Brook Lopez", pos: "C", baseOvr: 81 },
+  { name: "Rudy Gobert", pos: "C", baseOvr: 85 },
+  { name: "Paul George", pos: "SF", baseOvr: 85 },
+  { name: "Zach LaVine", pos: "SG", baseOvr: 82 },
+  { name: "Ja Morant", pos: "PG", baseOvr: 83 },
+  { name: "Donovan Mitchell", pos: "SG", baseOvr: 84 },
+  { name: "Jayson Tatum", pos: "SF", baseOvr: 85 },
+  { name: "Devin Booker", pos: "SG", baseOvr: 84 },
+  { name: "Karl-Anthony Towns", pos: "C", baseOvr: 84 },
+  { name: "Trae Young", pos: "PG", baseOvr: 83 },
+  { name: "Bam Adebayo", pos: "C", baseOvr: 82 }
 ];
 
 // ===== 遊戲狀態 =====
@@ -52,35 +65,36 @@ let gameState = {
 
 // ===== 工具函式 =====
 function createPlayer(raw) {
-  if (!raw || !raw.name) return null;
+  if(!raw||!raw.name) return null;
   return { name: raw.name, pos: raw.pos||"N/A", age: raw.age??18, ovr: raw.ovr??raw.baseOvr??60, salary: raw.salary??5 };
 }
 
 // ===== 初始化 AI 球隊 =====
-function initAITeams() {
-  NBA_TEAMS.forEach(team => gameState.aiTeams[team] = { roster: [] });
+function initAITeams(){
+  NBA_TEAMS.forEach(team=>gameState.aiTeams[team]={ roster: [] });
 }
 
 // ===== 初始化球員 =====
-function initPlayers() {
+function initPlayers(){
   const shuffled = [...REAL_NBA_PLAYERS].sort(()=>Math.random()-0.5);
-  gameState.freeAgents = shuffled.slice(0,6).map(p=>createPlayer({...p, age:18}));
-  gameState.futurePlayers = shuffled.slice(6);
+  gameState.freeAgents = shuffled.slice(0,20).map(p=>createPlayer({...p, age:18}));
+  gameState.futurePlayers = shuffled.slice(20);
 }
 
 // ===== 選隊伍 =====
-function selectTeam(teamName) {
-  gameState.selectedTeam = teamName;
-  alert(`你選擇了 ${teamName}`);
+function selectTeam(){
+  const sel = document.getElementById("teamSelect").value;
+  gameState.selectedTeam = sel;
+  alert(`你選擇了 ${sel}`);
   render();
 }
 
 // ===== 選球員 =====
-function signPlayer(index) {
-  if (gameState.draftedThisSeason>=2){ alert("本季最多簽兩位球員"); return; }
+function signPlayer(index){
+  if(gameState.draftedThisSeason>=2){ alert("本季最多簽兩位球員"); return; }
   const raw = gameState.freeAgents[index];
   const player = createPlayer(raw);
-  if (!player){ console.error("簽約失敗", raw); return; }
+  if(!player){ console.error("簽約失敗", raw); return; }
   gameState.roster.push(player);
   gameState.freeAgents.splice(index,1);
   gameState.draftedThisSeason++;
@@ -88,16 +102,16 @@ function signPlayer(index) {
 }
 
 // ===== 完成簽約 =====
-function finishSigning() {
+function finishSigning(){
   distributeRemainingPlayers();
-  gameState.freeAgents = [];
+  gameState.freeAgents=[];
   gameState.draftedThisSeason=0;
   alert("本季簽約完成");
   render();
 }
 
 // ===== 分配剩餘球員給 AI =====
-function distributeRemainingPlayers() {
+function distributeRemainingPlayers(){
   const aiNames = Object.keys(gameState.aiTeams).filter(n=>n!==gameState.selectedTeam);
   gameState.freeAgents.forEach((raw,i)=>{
     const player = createPlayer(raw);
@@ -109,12 +123,10 @@ function distributeRemainingPlayers() {
 }
 
 // ===== 新賽季 =====
-function nextSeason() {
+function nextSeason(){
   gameState.season++;
-  // 玩家與 AI 球員年齡增長
   gameState.roster.forEach(p=>p.age++);
   Object.values(gameState.aiTeams).forEach(team=>team.roster.forEach(p=>p.age++));
-  // 新秀生成
   const rookies = gameState.futurePlayers.splice(0,3).map(p=>createPlayer({...p, age:18}));
   gameState.freeAgents = rookies;
   gameState.draftedThisSeason=0;
@@ -122,25 +134,47 @@ function nextSeason() {
   render();
 }
 
+// ===== 查看其他隊伍 =====
+function showOtherTeam(){
+  const sel = document.getElementById("otherTeamSelect").value;
+  const team = gameState.aiTeams[sel];
+  const rosterStr = team.roster.map(p=>p.name+"("+p.age+")").join(", ")||"空";
+  document.getElementById("otherTeamRoster").innerText = `${sel}: ${rosterStr}`;
+}
+
 // ===== 渲染畫面 =====
 function render(){
   const screen = document.getElementById("screen");
   // 選隊伍畫面
   if(!gameState.selectedTeam){
-    screen.innerHTML = `<h2>NBA GM Simulator v0.8</h2>
-    <p>請選擇你的球隊:</p>
-    ${NBA_TEAMS.map(t=>`<button onclick="selectTeam('${t}')">${t}</button>`).join("<br>")}`;
+    screen.innerHTML=`<h2>NBA GM Simulator v0.9</h2>
+    <section><p>請選擇你的球隊:</p>
+    <select id="teamSelect">${NBA_TEAMS.map(t=>`<option value="${t}">${t}</option>`)}</select>
+    <button onclick="selectTeam()">確認</button></section>`;
     return;
   }
 
   // 遊戲畫面
-  screen.innerHTML = `<h2>NBA GM Simulator v0.8</h2>
+  screen.innerHTML=`<h2>NBA GM Simulator v0.9</h2>
   <p>賽季: ${gameState.season}</p>
-  <div class="roster"><b>你的隊伍 (${gameState.selectedTeam}):</b><br>${gameState.roster.map(p=>p.name+" ("+p.age+"歲)").join("<br>")||"空"}</div>
-  <div class="freeagents"><b>自由球員池:</b><br>${gameState.freeAgents.map((p,i)=>`<button onclick="signPlayer(${i})">選 ${p.name}</button>`).join("<br>")||"空"}</div>
-  <button onclick="finishSigning()">完成簽約</button>
-  <button onclick="nextSeason()">新賽季</button>
-  <div class="ai-teams"><b>AI 球隊:</b><br>${Object.entries(gameState.aiTeams).map(([name,team])=>`${name}: ${team.roster.map(p=>p.name+"("+p.age+")").join(", ")||"空"}`).join("<br>")}</div>`;
+  <section>
+    <b>你的隊伍 (${gameState.selectedTeam}):</b><br>
+    ${gameState.roster.map(p=>p.name+" ("+p.age+"歲)").join("<br>")||"空"}
+  </section>
+  <section>
+    <b>自由球員池:</b><br>
+    ${gameState.freeAgents.map((p,i)=>`<button onclick="signPlayer(${i})">選 ${p.name}</button>`).join("<br>")||"空"}
+    <br><button onclick="finishSigning()">完成簽約</button>
+  </section>
+  <section>
+    <b>其他球隊查看:</b><br>
+    <select id="otherTeamSelect">${NBA_TEAMS.filter(t=>t!==gameState.selectedTeam).map(t=>`<option value="${t}">${t}</option>`)}</select>
+    <button onclick="showOtherTeam()">查看</button>
+    <div id="otherTeamRoster" style="margin-top:5px;">空</div>
+  </section>
+  <section>
+    <button onclick="nextSeason()">新賽季</button>
+  </section>`;
 }
 
 // ===== 遊戲開始 =====
