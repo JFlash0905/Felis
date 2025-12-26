@@ -1,179 +1,128 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>NBA GM v1.0 STABLE</title>
+<title>NBA GM Simulator v0.7</title>
 <style>
-body { font-family: Arial; background:#f4f4f4; padding:20px }
-h1 { margin-bottom:4px }
-.red { color:red; font-weight:bold }
-button { padding:6px 12px; margin:4px; cursor:pointer }
-table { border-collapse:collapse; background:white; margin-top:10px }
-th,td { border:1px solid #ccc; padding:6px 10px; text-align:center }
-tr.click:hover { background:#e8f2ff; cursor:pointer }
-#wrap { display:flex; gap:20px }
-.box { background:white; padding:10px }
+body { font-family: Arial, sans-serif; background: #f4f4f4; margin:0; padding:0; }
+#screen { padding: 20px; }
+button { margin: 2px; padding:5px 10px; }
+.roster, .freeagents, .ai-teams { margin-top: 15px; }
 </style>
 </head>
-
 <body>
-<h1>NBA GM v1.0</h1>
-<div class="red">STABLE 版（選人、分配、模擬都正常）</div>
-
 <div id="screen"></div>
 
 <script>
-/* ========= 核心狀態 ========= */
-  const screen = document.getElementById("screen");
-let state = {
-  team: null,
-  season: 1,
-  roster: [],
-  freeAgents: [],
-  aiTeams: {}
-};
-
-const SALARY_CAP = 120;
-const MAX_PICK = 2;
-
-const TEAMS = ["Warriors","Lakers","Celtics","Bucks","Nuggets"];
-
-const NBA_PLAYERS = [
- {name:"Stephen Curry",pos:"PG",ovr:78},
- {name:"LeBron James",pos:"SF",ovr:82},
- {name:"Kevin Durant",pos:"SF",ovr:80},
- {name:"Giannis Antetokounmpo",pos:"PF",ovr:81},
- {name:"Luka Doncic",pos:"PG",ovr:79},
- {name:"Joel Embiid",pos:"C",ovr:80},
- {name:"Jayson Tatum",pos:"SF",ovr:76},
- {name:"Ja Morant",pos:"PG",ovr:73},
- {name:"Jimmy Butler",pos:"SF",ovr:76},
- {name:"Damian Lillard",pos:"PG",ovr:77},
- {name:"Anthony Davis",pos:"PF",ovr:77},
- {name:"Kawhi Leonard",pos:"SF",ovr:78}
+// ==== 真實 NBA 球員資料（簡化版，可自行增加） ====
+const REAL_NBA_PLAYERS = [
+  { name: "Stephen Curry", pos: "PG", baseOvr: 88 },
+  { name: "LeBron James", pos: "SF", baseOvr: 90 },
+  { name: "Kevin Durant", pos: "PF", baseOvr: 89 },
+  { name: "James Harden", pos: "SG", baseOvr: 86 },
+  { name: "Kawhi Leonard", pos: "SF", baseOvr: 87 },
+  { name: "Draymond Green", pos: "PF", baseOvr: 82 },
+  { name: "Klay Thompson", pos: "SG", baseOvr: 84 },
+  { name: "Jimmy Butler", pos: "SF", baseOvr: 86 },
+  { name: "Jrue Holiday", pos: "PG", baseOvr: 83 },
+  { name: "Brook Lopez", pos: "C", baseOvr: 81 }
 ];
 
-function rand(min,max){return Math.floor(Math.random()*(max-min+1))+min}
-function shuffle(a){for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}}
+// ==== 全域遊戲狀態 ====
+let gameState = {
+  season: 1,
+  selectedTeam: null,
+  roster: [],
+  freeAgents: [],
+  futurePlayers: [],
+  aiTeams: { "Lakers": { roster: [] }, "Bulls": { roster: [] } },
+  draftedThisSeason: 0
+};
 
-/* ========= 初始化 ========= */
-function startGame(){
-  state.freeAgents = NBA_PLAYERS.map(p=>({
-    ...p,
-    age:18,
-    salary: rand(5,15)
-  }));
-  shuffle(state.freeAgents);
-  TEAMS.forEach(t=>{
-    if(t!==state.team) state.aiTeams[t]=[];
-  });
-  renderBuild();
+// ==== 工具函式 ====
+function createPlayer(raw) {
+  if (!raw || !raw.name) return null;
+  return {
+    name: raw.name,
+    pos: raw.pos || "N/A",
+    age: raw.age ?? 18,
+    ovr: raw.ovr ?? raw.baseOvr ?? 60,
+    salary: raw.salary ?? 5
+  };
 }
 
-/* ========= 畫面 ========= */
-function render(){
-  if(!state.team) renderTeamSelect();
-  else renderBuild();
+// ==== 初始化球員 ====
+function initPlayers() {
+  const shuffled = [...REAL_NBA_PLAYERS].sort(() => Math.random() - 0.5);
+  gameState.freeAgents = shuffled.slice(0,6).map(p => createPlayer({ ...p, age: 18 }));
+  gameState.futurePlayers = shuffled.slice(6);
 }
 
-function renderTeamSelect(){
-  screen.innerHTML = `
-    <h2>選擇你的球隊</h2>
-    ${TEAMS.map(t=>`<button onclick="chooseTeam('${t}')">${t}</button>`).join("")}
-  `;
-}
-
-function chooseTeam(t){
-  state.team = t;
-  startGame();
-}
-
-function renderBuild(){
-  screen.innerHTML = `
-  <h2>球隊：${state.team}｜第 ${state.season} 季</h2>
-  <div id="wrap">
-    <div class="box">
-      <h3>自由球員（一次最多 2 人）</h3>
-      <table>
-        <tr><th></th><th>球員</th><th>位置</th><th>OVR</th><th>年齡</th><th>薪資</th></tr>
-        ${state.freeAgents.map((p,i)=>`
-          <tr class="click">
-            <td><input type="checkbox" data-i="${i}"></td>
-            <td>${p.name}</td>
-            <td>${p.pos}</td>
-            <td>${p.ovr}</td>
-            <td>${p.age}</td>
-            <td>$${p.salary}M</td>
-          </tr>`).join("")}
-      </table>
-      <button onclick="pickPlayers()">加入隊伍</button>
-      <button onclick="finishBuild()">完成建隊</button>
-    </div>
-
-    <div class="box">
-      <h3>你的隊伍</h3>
-      <table>
-        <tr><th>球員</th><th>位置</th><th>OVR</th><th>年齡</th></tr>
-        ${state.roster.map(p=>`
-          <tr>
-            <td>${p.name}</td>
-            <td>${p.pos}</td>
-            <td>${p.ovr}</td>
-            <td>${p.age}</td>
-          </tr>`).join("")}
-      </table>
-      <button onclick="nextSeason()">模擬下一季</button><br>
-      <button onclick="restart()">重啟生涯</button>
-    </div>
-  </div>
-  `;
-}
-
-/* ========= 行為 ========= */
-function pickPlayers(){
-  let checked=[...document.querySelectorAll("input[type=checkbox]:checked")];
-  if(checked.length===0) return alert("請選球員");
-  if(checked.length>MAX_PICK) return alert("一次最多 2 人");
-
-  checked.sort((a,b)=>b.dataset.i-a.dataset.i).forEach(cb=>{
-    let p = state.freeAgents.splice(cb.dataset.i,1)[0];
-    state.roster.push(p);
-  });
+// ==== 選球員 ====
+function signPlayer(index) {
+  if (gameState.draftedThisSeason >= 2) {
+    alert("本季最多簽兩位球員");
+    return;
+  }
+  const raw = gameState.freeAgents[index];
+  const player = createPlayer(raw);
+  if (!player) { console.error("簽約失敗", raw); return; }
+  gameState.roster.push(player);
+  gameState.freeAgents.splice(index,1);
+  gameState.draftedThisSeason++;
   render();
 }
 
-function finishBuild(){
-  shuffle(state.freeAgents);
-  Object.keys(state.aiTeams).forEach(t=>{
-    while(state.aiTeams[t].length<2 && state.freeAgents.length){
-      state.aiTeams[t].push(state.freeAgents.pop());
+// ==== 完成簽約，剩餘球員分配給 AI ====
+function finishSigning() {
+  distributeRemainingPlayers();
+  gameState.freeAgents = [];
+  gameState.draftedThisSeason = 0;
+  alert("本季簽約完成");
+  render();
+}
+
+// ==== 分配剩餘球員給 AI（每隊最多 2 人） ====
+function distributeRemainingPlayers() {
+  const aiTeamNames = Object.keys(gameState.aiTeams);
+  gameState.freeAgents.forEach((raw,i) => {
+    const player = createPlayer(raw);
+    if (!player) return;
+    const teamName = aiTeamNames[i % aiTeamNames.length];
+    if (!gameState.aiTeams[teamName].roster) gameState.aiTeams[teamName].roster = [];
+    if (gameState.aiTeams[teamName].roster.length < 2) {
+      gameState.aiTeams[teamName].roster.push(player);
     }
+    // 超過 2 人就落選，留到 future pool
   });
-  alert("建隊完成！");
+}
+
+// ==== 新賽季 ====
+function nextSeason() {
+  gameState.season++;
+  gameState.roster.forEach(p => p.age++);
+  const rookies = gameState.futurePlayers.splice(0,3).map(p => createPlayer({ ...p, age: 18 }));
+  gameState.freeAgents = rookies;
+  gameState.draftedThisSeason = 0;
+  alert("新賽季開始，生成新秀");
   render();
 }
 
-function nextSeason(){
-  state.season++;
-  state.roster.forEach(p=>p.age++);
-  Object.values(state.aiTeams).flat().forEach(p=>p.age++);
-  // 新秀
-  state.freeAgents.push({
-    name:"Rookie "+Math.floor(Math.random()*1000),
-    pos:["PG","SG","SF","PF","C"][rand(0,4)],
-    ovr:rand(60,68),
-    age:18,
-    salary:rand(4,8)
-  });
-  render();
+// ==== 渲染畫面 ====
+function render() {
+  const screen = document.getElementById("screen");
+  screen.innerHTML = `<h2>NBA GM Simulator v0.7</h2>
+  <p>賽季: ${gameState.season}</p>
+  <div class="roster"><b>你的隊伍:</b><br>${gameState.roster.map(p=>p.name+" ("+p.age+"歲)").join("<br>") || "空"}</div>
+  <div class="freeagents"><b>自由球員池:</b><br>${gameState.freeAgents.map((p,i)=>`<button onclick="signPlayer(${i})">選 ${p.name}</button>`).join("<br>") || "空"}</div>
+  <button onclick="finishSigning()">完成簽約</button>
+  <button onclick="nextSeason()">新賽季</button>
+  <div class="ai-teams"><b>AI 球隊:</b><br>${Object.entries(gameState.aiTeams).map(([name,team])=>`${name}: ${team.roster.map(p=>p.name+"("+p.age+")").join(", ") || "空"}`).join("<br>")}</div>
+  `;
 }
 
-function restart(){
-  localStorage.clear();
-  location.reload();
-}
-
-/* ========= 啟動 ========= */
+// ==== 開始遊戲 ====
+initPlayers();
 render();
 </script>
 </body>
