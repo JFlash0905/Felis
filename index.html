@@ -2,13 +2,17 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>NBA GM Core v1.0</title>
+<title>NBA GM Simulator v2.0</title>
 <style>
 body { font-family: Arial, sans-serif; background:#f2f2f2; }
-#app { max-width: 900px; margin:auto; padding:20px; }
-section { background:#fff; padding:12px; margin-bottom:12px; border-radius:6px; }
-button { padding:6px 10px; margin:4px 0; }
-select { padding:4px; }
+#app { max-width: 1000px; margin:auto; padding:20px; }
+h2 { text-align:center; }
+section { background:#fff; padding:15px; margin-bottom:15px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+button { padding:6px 10px; margin:4px; border:none; border-radius:4px; cursor:pointer; background:#007bff; color:white; }
+button:hover { background:#0056b3; }
+select { padding:4px; margin:4px 0; }
+.player-card { display:inline-block; background:#e3e3e3; margin:4px; padding:6px 8px; border-radius:4px; min-width:120px; text-align:center; }
+.stats { margin-top:6px; font-size:0.9em; color:#333; }
 </style>
 </head>
 <body>
@@ -34,7 +38,8 @@ let gameState={
  gamesPlayed:0,
  totalGames:20,
  wins:0,
- losses:0
+ losses:0,
+ mvp:null
 };
 const MAX_SIGN=2;
 const MIN_ROSTER_SIZE=8;
@@ -42,6 +47,14 @@ const MIN_ROSTER_SIZE=8;
 // ===== 工具 =====
 function createPlayer(tpl,age=18){return {name:tpl.name,pos:tpl.pos,ovr:tpl.ovr,age,salary:5,assigned:false};}
 function teamPower(roster){return roster.reduce((s,p)=>s+p.ovr,0)/Math.max(roster.length,1);}
+function pickMVP(allTeams){
+ let candidates=[];
+ Object.values(allTeams).forEach(t=>candidates.push(...t.roster));
+ candidates.push(...gameState.roster);
+ if(candidates.length===0) return null;
+ candidates.sort((a,b)=> (b.ovr+Math.random()*5)-(a.ovr+Math.random()*5));
+ return candidates[0];
+}
 
 // ===== 初始化 =====
 function startSeason(){
@@ -105,7 +118,9 @@ function simulateSeason(){
   Math.random()<myP/(myP+league)?gameState.wins++:gameState.losses++;
   gameState.gamesPlayed++;
  }
- alert(`例行賽結束：${gameState.wins}勝 ${gameState.losses}敗`);
+ gameState.mvp=pickMVP(gameState.aiTeams);
+ render();
+ alert(`例行賽結束：${gameState.wins}勝 ${gameState.losses}敗\n當季MVP: ${gameState.mvp.name} (${gameState.mvp.pos}, OVR:${gameState.mvp.ovr})`);
  nextSeason();
 }
 
@@ -141,7 +156,7 @@ function render(){
  }
  app.innerHTML=`
  <h2>第 ${gameState.season} 賽季｜${gameState.team}</h2>
- <section><b>你的球隊</b><br>${gameState.roster.map(p=>`${p.name} (${p.age})`).join("<br>")||"空"}</section>
+ <section><b>你的球隊</b><br>${gameState.roster.map(p=>`<div class="player-card">${p.name}<br>${p.pos} | ${p.age}歲 | OVR:${p.ovr}</div>`).join("")||"空"}</section>
  <section><b>自由球員（可簽 ${MAX_SIGN-gameState.drafted} 人）</b><br>
  <div id="faList"></div>
  <button id="finishBtn">完成簽約</button></section>
@@ -154,6 +169,7 @@ function render(){
  <b>例行賽</b><br>
  <div>進度：${gameState.gamesPlayed}/${gameState.totalGames}</div>
  <div>戰績：${gameState.wins} 勝 ${gameState.losses} 敗</div>
+ <div id="mvpInfo">${gameState.mvp?`當季MVP: ${gameState.mvp.name} (${gameState.mvp.pos}, OVR:${gameState.mvp.ovr})`:""}</div>
  <button id="simBtn">模擬例行賽</button>
  </section>
 `;
@@ -172,7 +188,7 @@ function render(){
   const div=document.getElementById("aiRoster");
   if(!name){div.innerHTML=""; return;}
   const roster=gameState.aiTeams[name].roster;
-  div.innerHTML=roster.map(p=>`${p.name} (${p.age})`).join("<br>")||"空";
+  div.innerHTML=roster.map(p=>`<div class="player-card">${p.name}<br>${p.pos} | ${p.age}歲 | OVR:${p.ovr}</div>`).join("")||"空";
  });
 }
 
