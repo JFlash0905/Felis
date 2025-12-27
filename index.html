@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>NBA GM Simulator v0.8.1</title>
+<title>NBA GM Simulator v0.8.2</title>
 <style>
 body { font-family: Arial, sans-serif; background:#f2f2f2; }
 #app { max-width: 900px; margin:auto; padding:20px; }
@@ -94,7 +94,6 @@ function teamPower(roster){return roster.reduce((s,p)=>s+p.ovr,0)/Math.max(roste
 
 // ===== 初始化 =====
 function startSeason(){
- // AI 球隊
  gameState.aiTeams={};
  ACTIVE_TEAMS.forEach(t=>{
    if(t!==gameState.team) gameState.aiTeams[t]={roster:[]};
@@ -161,7 +160,7 @@ function simulateSeason(){
   Math.random()<myP/(myP+league)?gameState.wins++:gameState.losses++;
   gameState.gamesPlayed++;
  }
- render(); // ✅ 即時更新
+ render();
  alert(`例行賽結束：${gameState.wins}勝 ${gameState.losses}敗`);
  nextSeason();
 }
@@ -216,7 +215,7 @@ function render(){
  <b>例行賽</b><br>
  <div>進度：${gameState.gamesPlayed}/${gameState.totalGames}</div>
  <div>戰績：${gameState.wins} 勝 ${gameState.losses} 敗</div>
- <button id="simBtn" ${gameState.drafted<2?"disabled":""}>模擬例行賽</button>
+ <button id="simBtn">模擬例行賽</button>
  </section>
 `;
 
@@ -233,9 +232,7 @@ function render(){
  document.getElementById("finishBtn").addEventListener("click",finishSigning);
 
  // 模擬例行賽
- if(gameState.drafted>=2){
-  document.getElementById("simBtn").addEventListener("click",simulateSeason);
- }
+ document.getElementById("simBtn").addEventListener("click",simulateSeason);
 
  // AI 球隊選單
  document.getElementById("aiSel").addEventListener("change",()=>{
