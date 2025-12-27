@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>NBA GM Simulator</title>
+<title>NBA GM Simulator - 5隊版</title>
 <style>
 body { font-family: Arial, sans-serif; background:#f2f2f2; }
 #app { max-width: 900px; margin:auto; padding:20px; }
@@ -16,38 +16,173 @@ select { padding:4px; }
 
 <script>
 // ================= 基本資料 =================
-const NBA_TEAMS = [
- "Atlanta Hawks","Boston Celtics","Brooklyn Nets","Charlotte Hornets",
- "Chicago Bulls","Cleveland Cavaliers","Dallas Mavericks","Denver Nuggets",
- "Detroit Pistons","Golden State Warriors","Houston Rockets","Indiana Pacers",
- "LA Clippers","LA Lakers","Memphis Grizzlies","Miami Heat",
- "Milwaukee Bucks","Minnesota Timberwolves","New Orleans Pelicans","New York Knicks",
- "Oklahoma City Thunder","Orlando Magic","Philadelphia 76ers","Phoenix Suns",
- "Portland Trail Blazers","Sacramento Kings","San Antonio Spurs","Toronto Raptors",
- "Utah Jazz","Washington Wizards"
+const ACTIVE_TEAMS = [
+ "Golden State Warriors",
+ "Los Angeles Lakers",
+ "Cleveland Cavaliers",
+ "San Antonio Spurs",
+ "Oklahoma City Thunder"
 ];
 
 const NBA_PLAYER_POOL = [
  {name:"Stephen Curry",pos:"PG",ovr:88},
- {name:"LeBron James",pos:"SF",ovr:90},
- {name:"Kevin Durant",pos:"PF",ovr:89},
- {name:"Kawhi Leonard",pos:"SF",ovr:87},
- {name:"James Harden",pos:"SG",ovr:86},
- {name:"Jayson Tatum",pos:"SF",ovr:85},
- {name:"Devin Booker",pos:"SG",ovr:84},
- {name:"Jimmy Butler",pos:"SF",ovr:86},
- {name:"Klay Thompson",pos:"SG",ovr:84},
- {name:"Draymond Green",pos:"PF",ovr:82},
- {name:"Ja Morant",pos:"PG",ovr:83},
- {name:"Donovan Mitchell",pos:"SG",ovr:84},
- {name:"Trae Young",pos:"PG",ovr:83},
- {name:"Bam Adebayo",pos:"C",ovr:82},
- {name:"Jrue Holiday",pos:"PG",ovr:83},
- {name:"Brook Lopez",pos:"C",ovr:81},
- {name:"Paul George",pos:"SF",ovr:85},
- {name:"Karl-Anthony Towns",pos:"C",ovr:84},
- {name:"Zach LaVine",pos:"SG",ovr:82},
- {name:"Rudy Gobert",pos:"C",ovr:85}
+{name:"LeBron James",pos:"SF",ovr:90},
+{name:"Kevin Durant",pos:"PF",ovr:89},
+{name:"Giannis Antetokounmpo",pos:"PF",ovr:91},
+{name:"Luka Dončić",pos:"PG",ovr:89},
+{name:"Joel Embiid",pos:"C",ovr:90},
+{name:"Nikola Jokić",pos:"C",ovr:92},
+{name:"Jayson Tatum",pos:"SF",ovr:87},
+{name:"Ja Morant",pos:"PG",ovr:85},
+{name:"Devin Booker",pos:"SG",ovr:84},
+{name:"Donovan Mitchell",pos:"SG",ovr:85},
+{name:"Trae Young",pos:"PG",ovr:84},
+{name:"Shai Gilgeous‑Alexander",pos:"PG",ovr:88},
+{name:"Anthony Davis",pos:"PF",ovr:88},
+{name:"Kawhi Leonard",pos:"SF",ovr:89},
+{name:"Jimmy Butler",pos:"SF",ovr:87},
+{name:"Chris Paul",pos:"PG",ovr:81},
+{name:"Damian Lillard",pos:"PG",ovr:88},
+{name:"Bradley Beal",pos:"SG",ovr:83},
+{name:"Zion Williamson",pos:"PF",ovr:86},
+{name:"Jaylen Brown",pos:"SG",ovr:85},
+{name:"Bam Adebayo",pos:"C",ovr:84},
+{name:"Paul George",pos:"SF",ovr:86},
+{name:"DeMar DeRozan",pos:"SF",ovr:84},
+{name:"Jrue Holiday",pos:"PG",ovr:83},
+{name:"Karl‑Anthony Towns",pos:"C",ovr:85},
+{name:"Rudy Gobert",pos:"C",ovr:87},
+{name:"Draymond Green",pos:"PF",ovr:80},
+{name:"Klay Thompson",pos:"SG",ovr:83},
+{name:"Pascal Siakam",pos:"PF",ovr:84},
+{name:"De’Aaron Fox",pos:"PG",ovr:84},
+{name:"Kristaps Porziņģis",pos:"PF",ovr:82},
+{name:"Dejounte Murray",pos:"PG",ovr:83},
+{name:"Jalen Suggs",pos:"SG",ovr:78},
+{name:"Mikal Bridges",pos:"SF",ovr:83},
+{name:"Tyrese Haliburton",pos:"PG",ovr:83},
+{name:"Brandon Ingram",pos:"SF",ovr:84},
+{name:"Lonzo Ball",pos:"PG",ovr:79},
+{name:"Julius Randle",pos:"PF",ovr:82},
+{name:"CJ McCollum",pos:"SG",ovr:82},
+{name:"Malcolm Brogdon",pos:"PG",ovr:81},
+{name:"John Wall",pos:"PG",ovr:80},
+{name:"Lauri Markkanen",pos:"PF",ovr:83},
+{name:"Kristian Luke Dončić",pos:"PG",ovr:88},
+{name:"Tobias Harris",pos:"PF",ovr:81},
+{name:"Kyle Lowry",pos:"PG",ovr:79},
+{name:"Marcus Smart",pos:"PG",ovr:81},
+{name:"Gordon Hayward",pos:"SF",ovr:79},
+{name:"Eric Gordon",pos:"SG",ovr:78},
+{name:"D’Angelo Russell",pos:"PG",ovr:81},
+{name:"Dennis Schröder",pos:"PG",ovr:79},
+{name:"Patrick Beverley",pos:"PG",ovr:75},
+{name:"Richaun Holmes",pos:"C",ovr:78},
+{name:"Steven Adams",pos:"C",ovr:77},
+{name:"Montrezl Harrell",pos:"C",ovr:78},
+{name:"Christian Wood",pos:"C",ovr:82},
+{name:"Mitchell Robinson",pos:"C",ovr:81},
+{name:"Jarrett Allen",pos:"C",ovr:82},
+{name:"Isaiah Stewart",pos:"PF",ovr:77},
+{name:"PJ Washington",pos:"PF",ovr:80},
+{name:"John Collins",pos:"PF",ovr:81},
+{name:"Myles Turner",pos:"C",ovr:82},
+{name:"Steven Adams",pos:"C",ovr:77},
+{name:"Darius Garland",pos:"PG",ovr:82},
+{name:"Collin Sexton",pos:"SG",ovr:78},
+{name:"RJ Barrett",pos:"SG",ovr:80},
+{name:"Immanuel Quickley",pos:"PG",ovr:77},
+{name:"Jaren Jackson Jr.",pos:"PF",ovr:83},
+{name:"Herb Jones",pos:"SF",ovr:76},
+{name:"Cade Cunningham",pos:"PG",ovr:83},
+{name:"Evan Mobley",pos:"C",ovr:83},
+{name:"Franz Wagner",pos:"SF",ovr:81},
+{name:"Tyrese Maxey",pos:"PG",ovr:82},
+{name:"Jonathan Isaac",pos:"SF",ovr:78},
+{name:"Kevin Love",pos:"PF",ovr:78},
+{name:"Terry Rozier",pos:"SG",ovr:80},
+{name:"Kyle Kuzma",pos:"PF",ovr:79},
+{name:"Harrison Barnes",pos:"SF",ovr:79},
+{name:"Jae’Sean Tate",pos:"SF",ovr:76},
+{name:"Kentavious Caldwell‑Pope",pos:"SG",ovr:78},
+{name:"Wendell Carter Jr.",pos:"C",ovr:78},
+{name:"Talen Horton‑Tucker",pos:"SG",ovr:76},
+{name:"Jalen Brunson",pos:"PG",ovr:82},
+{name:"Malik Monk",pos:"SG",ovr:80},
+{name:"Gary Trent Jr.",pos:"SG",ovr:79},
+{name:"Norman Powell",pos:"SG",ovr:80},
+{name:"Steven Adams",pos:"C",ovr:77},
+{name:"Rui Hachimura",pos:"PF",ovr:79},
+{name:"Josh Giddey",pos:"PG",ovr:80},
+{name:"Alperen Şengün",pos:"C",ovr:80},
+{name:"Jusuf Nurkić",pos:"C",ovr:78},
+{name:"Markelle Fultz",pos:"PG",ovr:75},
+{name:"Jonathan Kuminga",pos:"SF",ovr:78},
+{name:"Moses Moody",pos:"SG",ovr:77},
+{name:"Ramon Sessions",pos:"PG",ovr:74},
+{name:"Malik Beasley",pos:"SG",ovr:77},
+{name:"Buddy Hield",pos:"SG",ovr:80},
+{name:"Bruce Brown",pos:"SG",ovr:81},
+{name:"Dillon Brooks",pos:"SF",ovr:79},
+{name:"Kelly Olynyk",pos:"C",ovr:77},
+{name:"Duncan Robinson",pos:"SG",ovr:78},
+{name:"Terry Rozier",pos:"SG",ovr:80},
+{name:"Patrick Williams",pos:"PF",ovr:78},
+{name:"De’Andre Hunter",pos:"SF",ovr:79},
+{name:"Jalen Green",pos:"SG",ovr:80},
+{name:"Keegan Murray",pos:"SF",ovr:79},
+{name:"Scottie Barnes",pos:"SF",ovr:80},
+{name:"Coby White",pos:"PG",ovr:78},
+{name:"Darius Bazley",pos:"PF",ovr:77},
+{name:"Jarrett Culver",pos:"SG",ovr:74},
+{name:"Jalen Duren",pos:"C",ovr:78},
+{name:"Trey Murphy III",pos:"SF",ovr:77},
+{name:"Bones Hyland",pos:"PG",ovr:76},
+{name:"Immanuel Quickley",pos:"PG",ovr:77},
+{name:"RJ Hampton",pos:"SG",ovr:74},
+{name:"Ziaire Williams",pos:"SF",ovr:75},
+{name:"Ty Jerome",pos:"PG",ovr:75},
+{name:"De’Anthony Melton",pos:"PG",ovr:79},
+{name:"Derrick White",pos:"SG",ovr:81},
+{name:"Marcus Smart",pos:"PG",ovr:81},
+{name:"Al Horford",pos:"C",ovr:80},
+{name:"Brook Lopez",pos:"C",ovr:81},
+{name:"Mitchell Robinson",pos:"C",ovr:81},
+{name:"Andre Drummond",pos:"C",ovr:78},
+{name:"Larry Nance Jr.",pos:"PF",ovr:77},
+{name:"Joffrey Lauvergne",pos:"C",ovr:75},
+{name:"Kevin Huerter",pos:"SG",ovr:79},
+{name:"Donte DiVincenzo",pos:"SG",ovr:78},
+{name:"Cam Reddish",pos:"SF",ovr:76},
+{name:"Delon Wright",pos:"PG",ovr:75},
+{name:"Nicolas Claxton",pos:"C",ovr:80},
+{name:"Jalen McDaniels",pos:"SF",ovr:76},
+{name:"John Konchar",pos:"SF",ovr:74},
+{name:"Kira Lewis Jr.",pos:"PG",ovr:74},
+{name:"Saddiq Bey",pos:"SF",ovr:78},
+{name:"Killian Hayes",pos:"PG",ovr:75},
+{name:"Josh Richardson",pos:"SG",ovr:77},
+{name:"Devin Vassell",pos:"SF",ovr:80},
+{name:"Cameron Johnson",pos:"SF",ovr:79},
+{name:"Maxi Kleber",pos:"PF",ovr:77},
+{name:"P.J. Washington",pos:"PF",ovr:80},
+{name:"Wenyen Gabriel",pos:"SF",ovr:76},
+{name:"Jalen Smith",pos:"PF",ovr:77},
+{name:"Marcus Morris Sr.",pos:"PF",ovr:78},
+{name:"Markis McDuffie",pos:"SF",ovr:74},
+{name:"Isaiah Hartenstein",pos:"C",ovr:78},
+{name:"Juan Toscano‑Anderson",pos:"SF",ovr:74},
+{name:"Torrey Craig",pos:"SF",ovr:75},
+{name:"Dewayne Dedmon",pos:"C",ovr:74},
+{name:"Chimezie Metu",pos:"PF",ovr:75},
+{name:"Troy Brown Jr.",pos:"SG",ovr:76},
+{name:"Josh Hart",pos:"SF",ovr:79},
+{name:"PJ Tucker",pos:"PF",ovr:77},
+{name:"Kelly Oubre Jr.",pos:"SF",ovr:78},
+{name:"Brad Wanamaker",pos:"PG",ovr:73},
+{name:"Tony Bradley",pos:"C",ovr:75},
+{name:"Kemba Walker",pos:"PG",ovr:78},
+{name:"Duncan Robinson",pos:"SG",ovr:78},
 ];
 
 const MIN_ROSTER_SIZE = 8;
@@ -79,9 +214,13 @@ function teamPower(roster){
 }
 
 // ================= 初始化 =================
-NBA_TEAMS.forEach(t=>gameState.aiTeams[t]={roster:[]});
-
 function startSeason(){
+ // 先生成 AI 球隊
+ gameState.aiTeams = {};
+ACTIVE_TEAMS.forEach(t=>{
+ if(t!==gameState.team) gameState.aiTeams[t]={roster:[]};
+ });
+
  gameState.freeAgents=[];
  for(let i=0;i<Math.min(6,futureNBAPlayers.length);i++){
   gameState.freeAgents.push(createPlayer(futureNBAPlayers.shift(),18));
@@ -103,12 +242,19 @@ function finishSigning(){
 }
 
 function distributeRemaining(){
- const others = Object.keys(gameState.aiTeams).filter(t=>t!==gameState.team);
+ const aiNames = Object.keys(gameState.aiTeams);
  gameState.freeAgents.forEach((p,i)=>{
-  const t = gameState.aiTeams[others[i%others.length]];
-  if(t.roster.length<MIN_ROSTER_SIZE) t.roster.push(p);
+  const team = gameState.aiTeams[aiNames[i%aiNames.length]];
+  if(team.roster.length<MIN_ROSTER_SIZE) team.roster.push(p);
  });
  gameState.freeAgents=[];
+}
+
+// ================= 補齊球隊 =================
+function fillTeam(r){
+ while(r.length<MIN_ROSTER_SIZE && futureNBAPlayers.length){
+  r.push(createPlayer(futureNBAPlayers.shift(),18));
+ }
 }
 
 // ================= 例行賽 =================
@@ -128,12 +274,6 @@ function simulateSeason(){
 }
 
 // ================= 新賽季 =================
-function fillTeam(r){
- while(r.length<MIN_ROSTER_SIZE && futureNBAPlayers.length){
-  r.push(createPlayer(futureNBAPlayers.shift(),18));
- }
-}
-
 function nextSeason(){
  gameState.season++;
  gameState.gamesPlayed=0;
@@ -160,7 +300,7 @@ function render(){
  const app=document.getElementById("app");
  if(!gameState.team){
   app.innerHTML=`<h2>選擇球隊</h2>
-   <select id="teamSel">${NBA_TEAMS.map(t=>`<option>${t}</option>`).join("")}</select>
+   <select id="teamSel">${ACTIVE_TEAMS.map(t=>`<option>${t}</option>`).join("")}</select>
    <button onclick="selectTeam()">開始</button>`;
   return;
  }
@@ -178,11 +318,27 @@ function render(){
  </section>
 
  <section>
+ <b>查看其他球隊名單</b><br>
+ <select id="aiSel" onchange="showAITeam()"><option value=''>選擇隊伍</option>
+ ${Object.keys(gameState.aiTeams).map(t=>`<option>${t}</option>`).join("")}</select>
+ <div id="aiRoster"></div>
+ </section>
+
+ <section>
  <b>例行賽</b><br>
  進度：${gameState.gamesPlayed}/${gameState.totalGames}<br>
  戰績：${gameState.wins} 勝 ${gameState.losses} 敗<br>
  <button onclick="simulateSeason()">模擬例行賽</button>
  </section>`;
+}
+
+function showAITeam(){
+ const sel=document.getElementById("aiSel");
+ const name=sel.value;
+ const div=document.getElementById("aiRoster");
+ if(!name){ div.innerHTML=""; return; }
+ const roster=gameState.aiTeams[name].roster;
+ div.innerHTML=roster.map(p=>`${p.name} (${p.age})`).join("<br>")||"空";
 }
 
 render();
