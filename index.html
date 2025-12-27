@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>NBA GM Simulator v3 穩定版</title>
+<title>NBA GM Simulator v3 重構版</title>
 <style>
 body { font-family: Arial, sans-serif; background:#f2f2f2; }
 #app { max-width: 1000px; margin:auto; padding:20px; }
@@ -17,16 +17,21 @@ select { padding:4px; margin:4px 0; }
 <body>
 <div id="app"></div>
 <script>
-// ===== NBA 資料 =====
+// ===== NBA 球員資料（初版 20 名）=====
 const NBA_PLAYER_POOL = [
-{name:"Stephen Curry",pos:"PG",ovr:88},{name:"LeBron James",pos:"SF",ovr:90},{name:"Kevin Durant",pos:"PF",ovr:89},
-{name:"Giannis Antetokounmpo",pos:"PF",ovr:91},{name:"Luka Dončić",pos:"PG",ovr:89},{name:"Joel Embiid",pos:"C",ovr:90},
-{name:"Nikola Jokić",pos:"C",ovr:92},{name:"Jayson Tatum",pos:"SF",ovr:87},{name:"Ja Morant",pos:"PG",ovr:85},
-{name:"Devin Booker",pos:"SG",ovr:84},{name:"Donovan Mitchell",pos:"SG",ovr:85},{name:"Trae Young",pos:"PG",ovr:84}
-// 可補齊至 200 人
+{name:"Stephen Curry",pos:"PG",ovr:88},{name:"LeBron James",pos:"SF",ovr:90},
+{name:"Kevin Durant",pos:"PF",ovr:89},{name:"Giannis Antetokounmpo",pos:"PF",ovr:91},
+{name:"Luka Dončić",pos:"PG",ovr:89},{name:"Joel Embiid",pos:"C",ovr:90},
+{name:"Nikola Jokić",pos:"C",ovr:92},{name:"Jayson Tatum",pos:"SF",ovr:87},
+{name:"Ja Morant",pos:"PG",ovr:85},{name:"Devin Booker",pos:"SG",ovr:84},
+{name:"Donovan Mitchell",pos:"SG",ovr:85},{name:"Trae Young",pos:"PG",ovr:84},
+{name:"Jimmy Butler",pos:"SF",ovr:86},{name:"Kawhi Leonard",pos:"SF",ovr:88},
+{name:"Paul George",pos:"SF",ovr:87},{name:"Anthony Davis",pos:"PF",ovr:89},
+{name:"Bradley Beal",pos:"SG",ovr:85},{name:"Karl-Anthony Towns",pos:"C",ovr:87},
+{name:"Zion Williamson",pos:"PF",ovr:86},{name:"Chris Paul",pos:"PG",ovr:85}
 ];
 
-// ===== 狀態 =====
+// ===== 遊戲狀態 =====
 let gameState={
  season:1,
  team:null,
@@ -41,9 +46,9 @@ let gameState={
  mvp:null
 };
 
-const ACTIVE_TEAMS = ["Golden State Warriors","Los Angeles Lakers","Cleveland Cavaliers","San Antonio Spurs","Oklahoma City Thunder"];
+const ACTIVE_TEAMS=["Golden State Warriors","Los Angeles Lakers","Cleveland Cavaliers","San Antonio Spurs","Oklahoma City Thunder"];
 const MAX_SIGN=2;
-const MIN_ROSTER_SIZE=8;
+const MIN_ROSTER_SIZE=5;
 let futureNBAPlayers=[...NBA_PLAYER_POOL];
 
 // ===== 工具函數 =====
@@ -54,7 +59,7 @@ function pickMVP(allTeams){
  Object.values(allTeams).forEach(t=>candidates.push(...t.roster.map(clonePlayer)));
  candidates.push(...gameState.roster.map(clonePlayer));
  if(candidates.length===0) return null;
- candidates.sort((a,b)=> (b.ovr+Math.random()*5)-(a.ovr+Math.random()*5));
+ candidates.sort((a,b)=>(b.ovr+Math.random()*5)-(a.ovr+Math.random()*5));
  return candidates[0];
 }
 
@@ -64,9 +69,8 @@ function startSeason(){
  ACTIVE_TEAMS.forEach(t=>{
    if(t!==gameState.team) gameState.aiTeams[t]={roster:[]};
  });
- // 自由球員池生成
  gameState.freeAgents=[];
- let count = Math.min(6,futureNBAPlayers.length);
+ let count=Math.min(6,futureNBAPlayers.length);
  for(let i=0;i<count;i++){
    let p=clonePlayer(futureNBAPlayers.shift());
    p.age=18; p.salary=5; p.assigned=true;
@@ -78,8 +82,9 @@ function startSeason(){
 // ===== 簽約 =====
 function signPlayer(i){
  if(gameState.drafted>=MAX_SIGN) return alert("本季最多簽兩人");
- let p = gameState.freeAgents.splice(i,1)[0];
+ let p=gameState.freeAgents.splice(i,1)[0];
  gameState.roster.push(clonePlayer(p));
+ gameState.drafted++;
  render();
 }
 
