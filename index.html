@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>NBA GM Game — Phase F</title>
+  <title>NBA GM Game — Phase G</title>
   <style>
     :root{
       --bg:#0b0f14;--card:#111827;--panel:#0b1220;--stroke:#243044;
@@ -19,9 +19,9 @@
     }
     header h1{margin:0;font-size:16px}
     header .muted{color:var(--muted);font-size:12px}
-    main{padding:16px;max-width:1200px;margin:0 auto}
+    main{padding:16px;max-width:1240px;margin:0 auto}
     .grid{display:grid;grid-template-columns:1fr;gap:12px}
-    @media(min-width:1020px){.grid{grid-template-columns: 410px 1fr}}
+    @media(min-width:1100px){.grid{grid-template-columns: 430px 1fr}}
     .card{background:rgba(17,24,39,.92);border:1px solid #1f2937;border-radius:12px;padding:12px}
     .panel{background:rgba(7,16,33,.55);border:1px solid #1f2937;border-radius:12px;padding:12px}
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -47,7 +47,7 @@
     .tiny{font-size:12px}
     .bigTitle{font-size:18px;margin:0 0 6px 0}
     .teamGrid{display:grid;grid-template-columns:1fr;gap:8px}
-    @media(min-width:820px){.teamGrid{grid-template-columns:1fr 1fr}}
+    @media(min-width:860px){.teamGrid{grid-template-columns:1fr 1fr}}
     .teamBtn{
       width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;gap:10px;
       padding:12px;border-radius:12px
@@ -66,17 +66,19 @@
     .linkBtn{background:transparent;border:none;padding:0;color:#93c5fd;cursor:pointer}
     .linkBtn:hover{text-decoration:underline}
     .cols2{display:grid;grid-template-columns:1fr;gap:10px}
-    @media(min-width:860px){.cols2{grid-template-columns:1fr 1fr}}
+    @media(min-width:940px){.cols2{grid-template-columns:1fr 1fr}}
     .miniList{max-height:260px;overflow:auto;background:var(--panel);border:1px solid var(--stroke);border-radius:12px;padding:8px}
     .miniList .item{padding:8px;border-bottom:1px solid rgba(255,255,255,.06)}
     .miniList .item:last-child{border-bottom:none}
+    .log{max-height:220px;overflow:auto;background:var(--panel);border:1px solid var(--stroke);border-radius:12px;padding:10px}
+    .log p{margin:6px 0;font-size:13px}
     /* Modal */
     .modalBackdrop{
       position:fixed;inset:0;background:rgba(0,0,0,.6);
       display:none;align-items:center;justify-content:center;padding:16px;z-index:50;
     }
     .modal{
-      width:min(620px,100%);background:rgba(17,24,39,.97);
+      width:min(680px,100%);background:rgba(17,24,39,.97);
       border:1px solid #263244;border-radius:14px;padding:14px;
     }
     .modal h2{margin:0 0 8px 0;font-size:18px}
@@ -88,8 +90,8 @@
 <body>
 <header>
   <div>
-    <h1>NBA GM Game — Phase F</h1>
-    <div class="muted">全聯盟從零建隊｜交易中心（基石代價極高）｜點球員看詳細｜Reset 需輸入 RESET｜自動存檔</div>
+    <h1>NBA GM Game — Phase G</h1>
+    <div class="muted">全聯盟從零建隊｜交易｜比賽/賽季/排名｜點球員看詳細｜Reset 需輸入 RESET｜自動存檔</div>
   </div>
   <div class="row">
     <span class="pill" id="hdrStatus">未選隊</span>
@@ -106,7 +108,7 @@
           <div class="tiny muted">目前階段</div>
           <div class="row">
             <b id="phaseTitle">選隊</b>
-            <span class="pill" id="phasePill">Step 1/4</span>
+            <span class="pill" id="phasePill">Step 1/5</span>
           </div>
         </div>
         <div class="row">
@@ -118,29 +120,47 @@
 
       <div class="kpi">
         <div class="box">
-          <div class="tiny muted">你的球隊</div>
-          <b id="kpiTeam">-</b>
+          <div class="tiny muted">賽季</div>
+          <b id="kpiSeason">-</b>
         </div>
         <div class="box">
-          <div class="tiny muted">基石數量</div>
-          <b><span id="kpiCore">0</span> / 3</b>
+          <div class="tiny muted">進度</div>
+          <b id="kpiDay">-</b>
         </div>
         <div class="box">
-          <div class="tiny muted">聯盟狀態</div>
-          <b id="kpiLeague">未建立</b>
+          <div class="tiny muted">你的戰績</div>
+          <b><span id="kpiW">0</span>-<span id="kpiL">0</span></b>
         </div>
       </div>
 
       <div style="height:10px"></div>
 
       <div class="panel">
-        <b>規則（你定的）</b>
-        <ul class="tiny muted" style="margin:8px 0 0 18px">
-          <li>選隊只能一次，選完後介面消失（除非 Reset）。</li>
-          <li>必須選 <b>2–3 位</b> 基石球員才能進主介面。</li>
-          <li>Reset 需要輸入 <b>RESET</b>（全大寫）才會清空全部進度。</li>
-          <li>基石可交易，但 <b>代價極高</b>（AI 幾乎不放，除非你開很大）。</li>
-        </ul>
+        <div class="row space">
+          <b>比賽 / 賽季推進</b>
+          <span class="pill" id="seasonHint">-</span>
+        </div>
+        <div style="height:10px"></div>
+        <div class="row">
+          <button class="primary" id="btnSim1">模擬 1 天</button>
+          <button class="ghost" id="btnSim7">模擬 7 天</button>
+          <button class="ghost" id="btnSimAll">模擬到季末</button>
+          <button class="warn" id="btnNewSeason">新賽季</button>
+        </div>
+        <div class="tiny muted" style="margin-top:8px">
+          1 天 = 全聯盟 15 場都會打完，你的隊也會打一場（除非季末）。
+        </div>
+      </div>
+
+      <div style="height:10px"></div>
+
+      <div class="panel">
+        <div class="row space">
+          <b>事件紀錄</b>
+          <button class="ghost danger" id="btnClearLog">清空</button>
+        </div>
+        <div style="height:8px"></div>
+        <div class="log" id="log"></div>
       </div>
 
       <div style="height:10px"></div>
@@ -153,16 +173,6 @@
         <button class="warn" id="btnImport" style="width:100%">Import（覆蓋存檔）</button>
         <div class="tiny muted" style="margin-top:6px">Import 會直接套用你貼上的狀態。</div>
       </details>
-
-      <div style="height:10px"></div>
-
-      <div class="panel">
-        <b>Phase F 你能做什麼？</b>
-        <div class="tiny muted" style="margin-top:6px">
-          先把「聯盟一起建隊」＋「交易（含基石權重）」做穩。<br/>
-          下一階段再加：比賽 / 賽季 / 排名 / 自由市場 / 選秀。
-        </div>
-      </div>
     </section>
 
     <!-- RIGHT -->
@@ -203,7 +213,7 @@
         <div class="row space">
           <div>
             <p class="bigTitle">主介面</p>
-            <div class="muted tiny">你可以看你的名單、進交易中心、看全聯盟每隊基石概覽。</div>
+            <div class="muted tiny">你可以看名單、進交易中心、推賽季、看排名。</div>
           </div>
           <div class="row">
             <span class="pill" id="hubTeamPill">-</span>
@@ -222,14 +232,21 @@
 
           <div class="panel">
             <div class="row space">
-              <b>聯盟基石概覽</b>
-              <span class="pill muted">每隊 2–3 位</span>
+              <b>聯盟排名</b>
+              <span class="pill muted">依勝率排序</span>
             </div>
-            <div class="miniList" id="leagueCoresList"></div>
-            <div class="tiny muted" style="margin-top:8px">
-              這會讓你交易時更有「對抗感」。下一階段我們再加排名與賽季。
-            </div>
+            <table id="standingsTable"></table>
           </div>
+        </div>
+
+        <div style="height:10px"></div>
+
+        <div class="panel">
+          <div class="row space">
+            <b>聯盟基石概覽</b>
+            <span class="pill muted">每隊 2–3 位</span>
+          </div>
+          <div class="miniList" id="leagueCoresList"></div>
         </div>
       </div>
 
@@ -305,10 +322,10 @@
 
 <script>
 /* =========================
-   NBA GM — Phase F
+   NBA GM — Phase G
    ========================= */
 
-const LS_KEY = "nba_gm_phaseF_save_v1";
+const LS_KEY = "nba_gm_phaseG_save_v1";
 
 const TEAMS = [
   "Atlanta Hawks","Boston Celtics","Brooklyn Nets","Charlotte Hornets","Chicago Bulls",
@@ -330,12 +347,8 @@ function escapeHtml(s){
     .replaceAll("'","&#039;");
 }
 
-/* ===== Player pool (real NBA names)
-   這裡是「球員名字真實」，OVR/年齡是合理化值（非官方精準）。
-   Pool 要足夠大，讓 30 隊各選 2–3 位基石也不會缺人。
-*/
+/* ===== Player pool (real NBA names, simplified numbers) ===== */
 const NBA_PLAYER_POOL = [
-  // Superstars / Stars
   {id:1,name:"Nikola Jokic",pos:"C",ovr:98,age:29},
   {id:2,name:"Giannis Antetokounmpo",pos:"PF",ovr:97,age:30},
   {id:3,name:"Luka Doncic",pos:"PG",ovr:97,age:26},
@@ -353,24 +366,24 @@ const NBA_PLAYER_POOL = [
   {id:15,name:"Ja Morant",pos:"PG",ovr:92,age:26},
   {id:16,name:"Anthony Edwards",pos:"SG",ovr:93,age:24},
   {id:17,name:"Donovan Mitchell",pos:"SG",ovr:92,age:29},
-  {id:18,name:"Trae Young",pos:"PG",ovr:90,age:27},
-  {id:19,name:"Tyrese Haliburton",pos:"PG",ovr:90,age:26},
-  {id:20,name:"Jalen Brunson",pos:"PG",ovr:89,age:29},
-  {id:21,name:"Jaylen Brown",pos:"SG",ovr:89,age:29},
-  {id:22,name:"Kyrie Irving",pos:"PG",ovr:89,age:33},
-  {id:23,name:"Karl-Anthony Towns",pos:"C",ovr:89,age:30},
-  {id:24,name:"Rudy Gobert",pos:"C",ovr:88,age:33},
-  {id:25,name:"Bam Adebayo",pos:"C",ovr:88,age:28},
-  {id:26,name:"Domantas Sabonis",pos:"C",ovr:88,age:29},
-  {id:27,name:"Zion Williamson",pos:"PF",ovr:88,age:25},
-  {id:28,name:"Paul George",pos:"SF",ovr:88,age:35},
-  {id:29,name:"De'Aaron Fox",pos:"PG",ovr:88,age:28},
-  {id:30,name:"Jamal Murray",pos:"PG",ovr:88,age:28},
-  {id:31,name:"Tyrese Maxey",pos:"SG",ovr:87,age:25},
-  {id:32,name:"Cade Cunningham",pos:"PG",ovr:87,age:24},
-  {id:33,name:"Scottie Barnes",pos:"SF",ovr:87,age:24},
-  {id:34,name:"Paolo Banchero",pos:"PF",ovr:87,age:23},
-  {id:35,name:"Victor Wembanyama",pos:"C",ovr:90,age:22},
+  {id:18,name:"Tyrese Haliburton",pos:"PG",ovr:90,age:26},
+  {id:19,name:"Jalen Brunson",pos:"PG",ovr:89,age:29},
+  {id:20,name:"Jaylen Brown",pos:"SG",ovr:89,age:29},
+  {id:21,name:"Kyrie Irving",pos:"PG",ovr:89,age:33},
+  {id:22,name:"Karl-Anthony Towns",pos:"C",ovr:89,age:30},
+  {id:23,name:"Bam Adebayo",pos:"C",ovr:88,age:28},
+  {id:24,name:"Domantas Sabonis",pos:"C",ovr:88,age:29},
+  {id:25,name:"Zion Williamson",pos:"PF",ovr:88,age:25},
+  {id:26,name:"Paul George",pos:"SF",ovr:88,age:35},
+  {id:27,name:"De'Aaron Fox",pos:"PG",ovr:88,age:28},
+  {id:28,name:"Jamal Murray",pos:"PG",ovr:88,age:28},
+  {id:29,name:"Tyrese Maxey",pos:"SG",ovr:87,age:25},
+  {id:30,name:"Cade Cunningham",pos:"PG",ovr:87,age:24},
+  {id:31,name:"Scottie Barnes",pos:"SF",ovr:87,age:24},
+  {id:32,name:"Paolo Banchero",pos:"PF",ovr:87,age:23},
+  {id:33,name:"Victor Wembanyama",pos:"C",ovr:90,age:22},
+  {id:34,name:"Chet Holmgren",pos:"C",ovr:85,age:23},
+  {id:35,name:"Jalen Williams",pos:"SF",ovr:85,age:24},
   {id:36,name:"Alperen Sengun",pos:"C",ovr:86,age:23},
   {id:37,name:"Franz Wagner",pos:"SF",ovr:86,age:24},
   {id:38,name:"Mikal Bridges",pos:"SF",ovr:86,age:29},
@@ -385,90 +398,46 @@ const NBA_PLAYER_POOL = [
   {id:47,name:"Julius Randle",pos:"PF",ovr:84,age:31},
   {id:48,name:"Kristaps Porzingis",pos:"C",ovr:84,age:30},
   {id:49,name:"Deandre Ayton",pos:"C",ovr:83,age:27},
-  {id:50,name:"Lauri Markkanen",pos:"PF",ovr:86,age:28},
-
-  // Solid starters
-  {id:51,name:"Darius Garland",pos:"PG",ovr:84,age:26},
-  {id:52,name:"Evan Mobley",pos:"PF",ovr:84,age:24},
-  {id:53,name:"Jarrett Allen",pos:"C",ovr:83,age:27},
-  {id:54,name:"OG Anunoby",pos:"SF",ovr:83,age:28},
-  {id:55,name:"RJ Barrett",pos:"SF",ovr:82,age:25},
-  {id:56,name:"Jalen Williams",pos:"SF",ovr:85,age:24},
-  {id:57,name:"Chet Holmgren",pos:"C",ovr:85,age:23},
-  {id:58,name:"Kristaps Porzingis",pos:"C",ovr:84,age:30},
-  {id:59,name:"Khris Middleton",pos:"SF",ovr:82,age:34},
-  {id:60,name:"Brook Lopez",pos:"C",ovr:81,age:37},
-  {id:61,name:"Jaren Jackson Jr.",pos:"PF",ovr:86,age:26},
-  {id:62,name:"Bobby Portis",pos:"PF",ovr:80,age:30},
-  {id:63,name:"Jordan Poole",pos:"SG",ovr:81,age:26},
-  {id:64,name:"Kyle Kuzma",pos:"PF",ovr:81,age:30},
-  {id:65,name:"Luguentz Dort",pos:"SG",ovr:80,age:26},
-  {id:66,name:"Jerami Grant",pos:"PF",ovr:81,age:31},
-  {id:67,name:"Anfernee Simons",pos:"SG",ovr:81,age:26},
-  {id:68,name:"Dejounte Murray",pos:"PG",ovr:83,age:29},
-  {id:69,name:"Jalen Johnson",pos:"PF",ovr:81,age:24},
-  {id:70,name:"Banchero (Paolo)",pos:"PF",ovr:87,age:23},
-
-  // More recognizable rotation
-  {id:71,name:"Klay Thompson",pos:"SG",ovr:79,age:35},
-  {id:72,name:"Draymond Green",pos:"PF",ovr:79,age:35},
-  {id:73,name:"Andrew Wiggins",pos:"SF",ovr:78,age:30},
-  {id:74,name:"Chris Paul",pos:"PG",ovr:77,age:40},
-  {id:75,name:"Aaron Gordon",pos:"PF",ovr:80,age:30},
-  {id:76,name:"Michael Porter Jr.",pos:"SF",ovr:81,age:27},
-  {id:77,name:"Jusuf Nurkic",pos:"C",ovr:79,age:31},
-  {id:78,name:"Grayson Allen",pos:"SG",ovr:77,age:30},
-  {id:79,name:"Caris LeVert",pos:"SG",ovr:78,age:31},
-  {id:80,name:"Spencer Dinwiddie",pos:"PG",ovr:77,age:32},
-  {id:81,name:"Austin Reaves",pos:"SG",ovr:80,age:27},
-  {id:82,name:"D'Angelo Russell",pos:"PG",ovr:79,age:29},
-  {id:83,name:"Rui Hachimura",pos:"PF",ovr:78,age:27},
-  {id:84,name:"Myles Turner",pos:"C",ovr:82,age:29},
-  {id:85,name:"Benedict Mathurin",pos:"SG",ovr:78,age:23},
-  {id:86,name:"DeMarre? (placeholder removed)",pos:"SF",ovr:75,age:30},
-
-  // Young + prospects
-  {id:87,name:"Scoot Henderson",pos:"PG",ovr:77,age:22},
-  {id:88,name:"Brandon Miller",pos:"SF",ovr:78,age:23},
-  {id:89,name:"LaMelo Ball",pos:"PG",ovr:85,age:24},
-  {id:90,name:"Terry Rozier",pos:"PG",ovr:79,age:31},
-  {id:91,name:"Devin Vassell",pos:"SG",ovr:80,age:25},
-  {id:92,name:"Victor Wembanyama (Spurs)",pos:"C",ovr:90,age:22},
-  {id:93,name:"De'Aaron Fox (Kings)",pos:"PG",ovr:88,age:28},
-  {id:94,name:"Domantas Sabonis (Kings)",pos:"C",ovr:88,age:29},
-  {id:95,name:"Keegan Murray",pos:"PF",ovr:78,age:25},
-  {id:96,name:"Jabari Smith Jr.",pos:"PF",ovr:78,age:22},
-  {id:97,name:"Amen Thompson",pos:"SG",ovr:77,age:22},
-  {id:98,name:"Jalen Green",pos:"SG",ovr:80,age:24},
-  {id:99,name:"Fred VanVleet",pos:"PG",ovr:81,age:31},
-  {id:100,name:"Dillon Brooks",pos:"SF",ovr:78,age:29},
-
-  // Extra depth (avoid duplicates hurting too much)
-  {id:101,name:"Zach LaVine",pos:"SG",ovr:84,age:30},
-  {id:102,name:"Nikola Vucevic",pos:"C",ovr:80,age:35},
-  {id:103,name:"DeMar DeRozan (Bulls)",pos:"SF",ovr:85,age:36},
-  {id:104,name:"Lonzo Ball",pos:"PG",ovr:78,age:28},
-  {id:105,name:"Jimmy Butler (Heat)",pos:"SF",ovr:91,age:36},
-  {id:106,name:"Bam Adebayo (Heat)",pos:"C",ovr:88,age:28},
-  {id:107,name:"Tyler Herro",pos:"SG",ovr:81,age:26},
-  {id:108,name:"Jaren Jackson Jr. (Grizzlies)",pos:"PF",ovr:86,age:26},
-  {id:109,name:"Jalen Suggs",pos:"SG",ovr:79,age:24},
-  {id:110,name:"Jonathan Isaac",pos:"PF",ovr:78,age:28},
-  {id:111,name:"Kemba Walker (legacy)",pos:"PG",ovr:75,age:35},
-  {id:112,name:"Russell Westbrook",pos:"PG",ovr:78,age:37},
-  {id:113,name:"James Harden",pos:"SG",ovr:84,age:36},
-  {id:114,name:"Paul George (Clippers)",pos:"SF",ovr:88,age:35},
-  {id:115,name:"Kawhi Leonard (Clippers)",pos:"SF",ovr:92,age:34},
-  {id:116,name:"Jalen Duren",pos:"C",ovr:78,age:22},
-  {id:117,name:"Ausar Thompson",pos:"SF",ovr:77,age:22},
-  {id:118,name:"Cameron Johnson",pos:"SF",ovr:78,age:29},
-  {id:119,name:"Mikal Bridges (Nets)",pos:"SF",ovr:86,age:29},
-  {id:120,name:"Ben Simmons",pos:"PG",ovr:77,age:29},
+  {id:50,name:"Darius Garland",pos:"PG",ovr:84,age:26},
+  {id:51,name:"Evan Mobley",pos:"PF",ovr:84,age:24},
+  {id:52,name:"Jarrett Allen",pos:"C",ovr:83,age:27},
+  {id:53,name:"OG Anunoby",pos:"SF",ovr:83,age:28},
+  {id:54,name:"Dejounte Murray",pos:"PG",ovr:83,age:29},
+  {id:55,name:"Myles Turner",pos:"C",ovr:82,age:29},
+  {id:56,name:"Zach LaVine",pos:"SG",ovr:84,age:30},
+  {id:57,name:"James Harden",pos:"SG",ovr:84,age:36},
+  {id:58,name:"Russell Westbrook",pos:"PG",ovr:78,age:37},
+  {id:59,name:"Klay Thompson",pos:"SG",ovr:79,age:35},
+  {id:60,name:"Draymond Green",pos:"PF",ovr:79,age:35},
+  {id:61,name:"LaMelo Ball",pos:"PG",ovr:85,age:24},
+  {id:62,name:"Devin Vassell",pos:"SG",ovr:80,age:25},
+  {id:63,name:"Jalen Green",pos:"SG",ovr:80,age:24},
+  {id:64,name:"Fred VanVleet",pos:"PG",ovr:81,age:31},
+  {id:65,name:"Jerami Grant",pos:"PF",ovr:81,age:31},
+  {id:66,name:"Michael Porter Jr.",pos:"SF",ovr:81,age:27},
+  {id:67,name:"Aaron Gordon",pos:"PF",ovr:80,age:30},
+  {id:68,name:"Austin Reaves",pos:"SG",ovr:80,age:27},
+  {id:69,name:"Andrew Wiggins",pos:"SF",ovr:78,age:30},
+  {id:70,name:"Chris Paul",pos:"PG",ovr:77,age:40},
+  {id:71,name:"Kyle Kuzma",pos:"PF",ovr:81,age:30},
+  {id:72,name:"Jordan Poole",pos:"SG",ovr:81,age:26},
+  {id:73,name:"Rudy Gobert",pos:"C",ovr:88,age:33},
+  {id:74,name:"Brook Lopez",pos:"C",ovr:81,age:37},
+  {id:75,name:"Bobby Portis",pos:"PF",ovr:80,age:30},
+  {id:76,name:"Dillon Brooks",pos:"SF",ovr:78,age:29},
+  {id:77,name:"Caris LeVert",pos:"SG",ovr:78,age:31},
+  {id:78,name:"Spencer Dinwiddie",pos:"PG",ovr:77,age:32},
+  {id:79,name:"Rui Hachimura",pos:"PF",ovr:78,age:27},
+  {id:80,name:"Scoot Henderson",pos:"PG",ovr:77,age:22},
+  {id:81,name:"Brandon Miller",pos:"SF",ovr:78,age:23},
+  {id:82,name:"Keegan Murray",pos:"PF",ovr:78,age:25},
+  {id:83,name:"Jabari Smith Jr.",pos:"PF",ovr:78,age:22},
+  {id:84,name:"Amen Thompson",pos:"SG",ovr:77,age:22},
+  {id:85,name:"Ausar Thompson",pos:"SF",ovr:77,age:22},
 ];
 
 function buildCorePool(){
-  // 用 pool 當作「基石池」的來源；但 Step2 顯示的我們只取前 24 名（更像是挑選清單）
-  // 你也可以換成隨機抽 24 人：看你想要的遊戲感覺
+  // Step2 顯示 24 人基石池（更像“挑核心”）
   const sorted = [...NBA_PLAYER_POOL].sort((a,b)=>b.ovr-a.ovr);
   return sorted.slice(0, 24).map(p=>({...p}));
 }
@@ -476,17 +445,23 @@ function buildCorePool(){
 /* ====== State machine ======
    phase: "TEAM" -> "CORE" -> "HUB" -> "TRADE"
 */
+const DEFAULT_GAMES_PER_TEAM = 20; // 你想加長賽季：改這裡（例如 30 / 40）
 function defaultState(){
   return {
-    version: 2,
+    version: 3,
     phase: "TEAM",
     teamLocked: false,
     userTeam: null,
     userTeamId: null,
     corePool: buildCorePool(),
     chosenCoreIds: [],
-    roster: [],
     league: null, // [{id,name,w,l,roster:[]}, ...]
+    // season
+    season: 1,
+    gamesPerTeam: DEFAULT_GAMES_PER_TEAM,
+    dayIndex: 0,
+    scheduleDays: [], // Array< Array<[teamIdA, teamIdB]> >
+    log: [],
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
@@ -517,28 +492,19 @@ function hardReset(){
 }
 
 function syncLegacyStateIfNeeded(){
-  // 如果你是從 Phase E 升上來：可能沒有 league / userTeamId
-  if(state && state.userTeam && state.phase==="HUB" && !state.league){
-    // 建聯盟：用你已經選好的 roster 當你隊的基石
-    state.league = buildLeague(TEAMS);
-    state.userTeamId = TEAMS.indexOf(state.userTeam);
-
-    const usedIds = new Set((state.roster||[]).map(p=>p.id));
-    state.league[state.userTeamId].roster = (state.roster||[]).map(p=>({...p, team: state.userTeam, isCore:true}));
-
-    // 其他隊 AI 挑 2–3 位基石（用整個 NBA_PLAYER_POOL 當來源）
-    const pool = [...NBA_PLAYER_POOL].sort((a,b)=>b.ovr-a.ovr);
-    for(const team of state.league){
-      if(team.id===state.userTeamId) continue;
-      const aiCores = aiPickCoresFromPool(pool, usedIds, 2, 3).map(p=>({...p, isCore:true, team: team.name}));
-      team.roster = aiCores;
-    }
-    saveState();
-  }
-
-  // 確保 corePool 在每次載入都存在（避免 import 缺欄位）
+  // ensure corePool
   if(!state.corePool || !Array.isArray(state.corePool) || state.corePool.length===0){
     state.corePool = buildCorePool();
+  }
+  if(!state.log) state.log = [];
+  if(!state.gamesPerTeam) state.gamesPerTeam = DEFAULT_GAMES_PER_TEAM;
+  if(!state.scheduleDays) state.scheduleDays = [];
+
+  // If league exists but schedule missing -> regenerate schedule
+  if(state.league && state.league.length===30 && (!state.scheduleDays || state.scheduleDays.length===0)){
+    state.dayIndex = state.dayIndex ?? 0;
+    state.scheduleDays = generateSeasonSchedule(state.league.map(t=>t.id), state.gamesPerTeam);
+    saveState();
   }
 }
 
@@ -566,7 +532,6 @@ el("modalBackdrop").addEventListener("click",(e)=>{
 function buildLeague(teamNames){
   return teamNames.map((name, id)=>({ id, name, w:0, l:0, roster:[] }));
 }
-
 function aiPickCoresFromPool(pool, usedIds, min=2, max=3){
   const need = rand(min, max);
   const picked = [];
@@ -575,7 +540,7 @@ function aiPickCoresFromPool(pool, usedIds, min=2, max=3){
   const candidates = pool.filter(p=>!usedIds.has(p.id));
   candidates.sort((a,b)=>b.ovr-a.ovr);
 
-  // 優先不同位置
+  // prefer different positions
   for(const p of candidates){
     if(picked.length>=need) break;
     if(!pickedPos.has(p.pos)){
@@ -584,7 +549,7 @@ function aiPickCoresFromPool(pool, usedIds, min=2, max=3){
       usedIds.add(p.id);
     }
   }
-  // 補滿
+  // fill
   if(picked.length < need){
     for(const p of candidates){
       if(picked.length>=need) break;
@@ -623,18 +588,142 @@ function doTrade(oppTeamId, givePlayerId, getPlayerId){
     return { ok:false, reason:`對方拒絕：你的報價 ${giveV.toFixed(0)} 太低，需求 ≥ ${(getV*mult).toFixed(0)}` };
   }
 
-  // swap
   myTeam.roster = myTeam.roster.filter(p=>p.id!==givePlayerId);
   oppTeam.roster = oppTeam.roster.filter(p=>p.id!==getPlayerId);
 
   myTeam.roster.push({...get, team: myTeam.name});
   oppTeam.roster.push({...give, team: oppTeam.name});
 
-  // 同步 UI roster
-  state.roster = myTeam.roster;
-
   saveState();
   return { ok:true, give, get, mult, giveV, getV };
+}
+
+/* ===== Season / games ===== */
+function teamOVR(team){
+  const roster = team.roster || [];
+  if(roster.length===0) return 60;
+  // 核心有額外權重（更像“基石”）
+  const values = roster.map(p=>p.ovr + (p.isCore ? 2 : 0));
+  const avg = values.reduce((s,x)=>s+x,0)/values.length;
+  return Math.round(avg);
+}
+
+function winProb(ovrA, ovrB){
+  const diff = ovrA - ovrB;
+  return 1/(1+Math.pow(10, -diff/15));
+}
+
+function simulateGame(teamA, teamB){
+  const oA = teamOVR(teamA);
+  const oB = teamOVR(teamB);
+  const pA = winProb(oA, oB);
+  const aWin = Math.random() < pA;
+
+  const base = 98 + rand(-6, 10);
+  const spread = clamp(Math.round((oA-oB)/2) + rand(-10,10), -22, 22);
+  let scoreA = base + Math.max(0, spread) + rand(-8,8);
+  let scoreB = base + Math.max(0, -spread) + rand(-8,8);
+  if(scoreA===scoreB){ scoreA += rand(1,5); }
+
+  if(aWin){
+    if(scoreA<scoreB) [scoreA,scoreB]=[scoreB,scoreA];
+    teamA.w++; teamB.l++;
+  }else{
+    if(scoreB<scoreA) [scoreA,scoreB]=[scoreB,scoreA];
+    teamB.w++; teamA.l++;
+  }
+  return { aWin, scoreA, scoreB, oA, oB, pA };
+}
+
+function generateSeasonSchedule(teamIds, days){
+  // 每天把 30 隊洗牌後配對 -> 15 場
+  const schedule = [];
+  for(let d=0; d<days; d++){
+    const arr = [...teamIds];
+    shuffle(arr);
+    const matchups = [];
+    for(let i=0;i<arr.length;i+=2){
+      matchups.push([arr[i], arr[i+1]]);
+    }
+    schedule.push(matchups);
+  }
+  return schedule;
+}
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){
+    const j = rand(0,i);
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function standingsSorted(){
+  return [...state.league].sort((x,y)=>{
+    const px = x.w/(x.w+x.l || 1);
+    const py = y.w/(y.w+y.l || 1);
+    if(py!==px) return py-px;
+    return teamOVR(y)-teamOVR(x);
+  });
+}
+
+function log(msg, cls=""){
+  state.log.unshift({ t: Date.now(), msg, cls });
+  // keep reasonable size
+  if(state.log.length>180) state.log.length = 180;
+}
+
+function renderLog(){
+  const box = el("log");
+  box.innerHTML = state.log.slice(0,90).map(x=>{
+    const time = new Date(x.t).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"});
+    return `<p class="${x.cls}"><span class="muted">[${time}]</span> ${escapeHtml(x.msg)}</p>`;
+  }).join("") || `<p class="muted">（還沒有事件）</p>`;
+}
+
+function simulateOneDay(){
+  if(!state.league) return;
+  if(state.dayIndex >= state.gamesPerTeam){
+    log("季末已到，請按「新賽季」。", "warnTxt");
+    return;
+  }
+
+  const today = state.scheduleDays[state.dayIndex];
+  const myId = state.userTeamId;
+  let myGameSummary = null;
+
+  for(const [aId,bId] of today){
+    const A = state.league[aId];
+    const B = state.league[bId];
+    const res = simulateGame(A,B);
+
+    if(aId===myId || bId===myId){
+      const me = (aId===myId) ? A : B;
+      const opp= (aId===myId) ? B : A;
+      const meScore = (aId===myId) ? res.scoreA : res.scoreB;
+      const oppScore= (aId===myId) ? res.scoreB : res.scoreA;
+      const win = (meScore > oppScore);
+      myGameSummary = `${me.name} ${meScore}–${oppScore} ${opp.name}（${win?"勝":"敗"}）`;
+    }
+  }
+
+  state.dayIndex++;
+  if(myGameSummary) log(`Day ${state.dayIndex}: ${myGameSummary}`, "goodTxt");
+
+  // season end message
+  if(state.dayIndex >= state.gamesPerTeam){
+    const top8 = standingsSorted().slice(0,8).map((t,i)=>`${i+1}. ${t.name}`).join("<br/>");
+    log("例行賽結束！Top 8 已產生。", "warnTxt");
+    openModal({
+      title:"季末結算（Top 8）",
+      bodyHtml:`<div class="tiny muted">賽季 ${state.season} 例行賽結束。</div>
+               <div style="height:10px"></div>
+               <div class="body tiny" style="line-height:1.6">${top8}</div>
+               <div class="tiny muted" style="margin-top:10px">下一步要加季後賽也很簡單（Phase H）。</div>`,
+      actions:[{label:"OK", className:"primary", onClick: closeModal}]
+    });
+  }
+
+  saveState();
 }
 
 /* ====== UI ====== */
@@ -652,20 +741,26 @@ function setPhaseUI(){
   screenHub.style.display   = (phase==="HUB")  ? "" : "none";
   screenTrade.style.display = (phase==="TRADE")? "" : "none";
 
-  let title="選隊", pill="Step 1/4";
-  if(phase==="CORE"){ title="選基石"; pill="Step 2/4"; }
-  if(phase==="HUB"){ title="主介面"; pill="Step 3/4"; }
-  if(phase==="TRADE"){ title="交易"; pill="Step 4/4"; }
+  let title="選隊", pill="Step 1/5";
+  if(phase==="CORE"){ title="選基石"; pill="Step 2/5"; }
+  if(phase==="HUB"){ title="主介面"; pill="Step 3/5"; }
+  if(phase==="TRADE"){ title="交易"; pill="Step 4/5"; }
 
   el("phaseTitle").textContent = title;
   el("phasePill").textContent = pill;
 
   hdrStatus.textContent = (state.teamLocked && state.userTeam) ? `已選隊：${state.userTeam}` : "未選隊";
 
-  // KPIs
-  el("kpiTeam").textContent = state.userTeam ?? "-";
-  el("kpiCore").textContent = state.chosenCoreIds.length;
-  el("kpiLeague").textContent = state.league ? "已建立" : "未建立";
+  // KPIs (left)
+  el("kpiSeason").textContent = state.league ? `S${state.season}` : "-";
+  el("kpiDay").textContent = state.league ? `Day ${Math.min(state.dayIndex+1, state.gamesPerTeam)}/${state.gamesPerTeam}` : "-";
+
+  const myTeam = (state.league && state.userTeamId!=null) ? state.league[state.userTeamId] : null;
+  el("kpiW").textContent = myTeam ? myTeam.w : 0;
+  el("kpiL").textContent = myTeam ? myTeam.l : 0;
+
+  el("seasonHint").textContent = state.league ? `每隊 ${state.gamesPerTeam} 場` : "尚未建立聯盟";
+  el("seasonHint").title = "要改場數請改 DEFAULT_GAMES_PER_TEAM";
 }
 
 function renderTeamScreen(){
@@ -696,7 +791,6 @@ function chooseTeam(teamName){
   state.userTeam = teamName;
   state.teamLocked = true;
   state.phase = "CORE";
-  // 每次新選隊重新生成 corePool（可保持新鮮感）
   state.corePool = buildCorePool();
   state.chosenCoreIds = [];
   saveState();
@@ -756,24 +850,20 @@ function toggleCorePick(playerId){
 }
 
 function finalizeCoreAndLeague(){
-  // 建立聯盟
+  // create league
   state.league = buildLeague(TEAMS);
   state.userTeamId = TEAMS.indexOf(state.userTeam);
 
-  // 你選到的基石（從 corePool 取）
+  // my cores
   const chosen = new Set(state.chosenCoreIds);
   const myCores = state.corePool
     .filter(p=>chosen.has(p.id))
     .map(p=>({...p, isCore:true, team: state.userTeam}));
 
-  // usedIds：避免 AI 拿到你選過的同一個人
   const usedIds = new Set(myCores.map(p=>p.id));
-
-  // 先塞你隊
   state.league[state.userTeamId].roster = myCores;
-  state.roster = myCores;
 
-  // AI：從更大 pool 挑 2–3 位基石給其他隊
+  // AI cores
   const pool = [...NBA_PLAYER_POOL].sort((a,b)=>b.ovr-a.ovr);
   for(const team of state.league){
     if(team.id === state.userTeamId) continue;
@@ -781,12 +871,20 @@ function finalizeCoreAndLeague(){
     team.roster = aiCores;
   }
 
+  // season init
+  state.dayIndex = 0;
+  state.scheduleDays = generateSeasonSchedule(state.league.map(t=>t.id), state.gamesPerTeam);
+
+  log(`你已完成建隊：${state.userTeam}（基石 ${myCores.length} 位）。`, "goodTxt");
+  log(`賽季 S${state.season} 開始（每隊 ${state.gamesPerTeam} 場）。`, "warnTxt");
+
   state.phase = "HUB";
   saveState();
   renderAll();
 }
 
 function renderHubScreen(){
+  const myTeam = state.league?.[state.userTeamId];
   el("hubTeamPill").textContent = state.userTeam ? `你的隊伍：${state.userTeam}` : "-";
 
   el("btnGoTrade").onclick = ()=>{
@@ -795,11 +893,9 @@ function renderHubScreen(){
     renderAll();
   };
 
-  // Your roster table
+  // Roster table
   const table = el("rosterTable");
-  const myTeam = state.league?.[state.userTeamId];
-  const roster = myTeam?.roster ?? state.roster ?? [];
-
+  const roster = myTeam?.roster ?? [];
   if(roster.length===0){
     table.innerHTML = `<tr><td class="muted">目前名單是空的。</td></tr>`;
   }else{
@@ -829,14 +925,51 @@ function renderHubScreen(){
     });
   }
 
-  // League cores list
+  renderStandings();
+  renderLeagueCores();
+}
+
+function renderStandings(){
+  const tbl = el("standingsTable");
+  if(!state.league){
+    tbl.innerHTML = `<tr><td class="muted">聯盟尚未建立。</td></tr>`;
+    return;
+  }
+  const sorted = standingsSorted();
+  const myId = state.userTeamId;
+  const rows = sorted.map((t,i)=>{
+    const gp = t.w+t.l;
+    const pct = gp? (t.w/gp) : 0;
+    const ovr = teamOVR(t);
+    const highlight = (t.id===myId) ? `style="background:rgba(34,197,94,.08)"` : "";
+    return `
+      <tr ${highlight}>
+        <td>${i+1}</td>
+        <td>${escapeHtml(t.name)}</td>
+        <td>${t.w}-${t.l}</td>
+        <td>${pct.toFixed(3)}</td>
+        <td>${ovr}</td>
+      </tr>
+    `;
+  }).join("");
+  tbl.innerHTML = `
+    <thead>
+      <tr><th>#</th><th>球隊</th><th>戰績</th><th>勝率</th><th>隊伍OVR</th></tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  `;
+}
+
+function renderLeagueCores(){
   const list = el("leagueCoresList");
   if(!state.league){
     list.innerHTML = `<div class="item muted">聯盟尚未建立。</div>`;
     return;
   }
-  const items = state.league.map(team=>{
-    const cores = (team.roster||[]).map(p=>`${escapeHtml(p.name)}${p.isCore?` <span class="star">★</span>`:""} <span class="muted tiny">(${escapeHtml(p.pos)} ${p.ovr})</span>`).join("<br/>");
+  list.innerHTML = state.league.map(team=>{
+    const cores = (team.roster||[])
+      .map(p=>`${escapeHtml(p.name)} <span class="muted tiny">(${escapeHtml(p.pos)} ${p.ovr})</span> <span class="star">★</span>`)
+      .join("<br/>");
     return `
       <div class="item">
         <b>${escapeHtml(team.name)}</b>
@@ -844,14 +977,13 @@ function renderHubScreen(){
       </div>
     `;
   }).join("");
-  list.innerHTML = items;
 }
 
+/* ===== Trade UI ===== */
 function renderTradeScreen(){
   const myTeam = state.league[state.userTeamId];
   el("tradeHintPill").textContent = `你的隊伍：${myTeam.name}`;
 
-  // Opponent select
   const oppSel = el("oppSelect");
   oppSel.innerHTML = "";
   state.league.forEach(t=>{
@@ -862,9 +994,7 @@ function renderTradeScreen(){
     oppSel.appendChild(opt);
   });
 
-  const defaultOppId = Number(oppSel.value);
-  setupTradeForOpponent(defaultOppId);
-
+  setupTradeForOpponent(Number(oppSel.value));
   oppSel.onchange = ()=>setupTradeForOpponent(Number(oppSel.value));
   el("btnRefreshTrade").onclick = ()=>setupTradeForOpponent(Number(oppSel.value));
 
@@ -888,6 +1018,9 @@ function renderTradeScreen(){
       });
       return;
     }
+
+    log(`交易成功：送出 ${res.give.name}，得到 ${res.get.name}。`, "goodTxt");
+
     openModal({
       title:"交易成功",
       bodyHtml: `
@@ -899,7 +1032,7 @@ function renderTradeScreen(){
         <div class="tiny muted">你得到：</div>
         <div><b>${escapeHtml(res.get.name)}</b> ${res.get.isCore?`<span class="star">★</span>`:""} <span class="muted tiny">(${escapeHtml(res.get.pos)} ${res.get.ovr})</span></div>
         <div style="height:10px"></div>
-        <div class="tiny muted">倍率：${res.mult.toFixed(2)}（基石牽涉會更難）</div>
+        <div class="tiny muted">倍率：${res.mult.toFixed(2)}（牽涉基石更難）</div>
       `,
       actions:[{label:"OK", className:"primary", onClick: ()=>{ closeModal(); renderAll(); }}]
     });
@@ -910,13 +1043,11 @@ function setupTradeForOpponent(oppTeamId){
   const myTeam = state.league[state.userTeamId];
   const oppTeam = state.league[oppTeamId];
 
-  // Build give/get selects
   const giveSel = el("giveSelect");
   const getSel  = el("getSelect");
   giveSel.innerHTML = "";
   getSel.innerHTML = "";
 
-  // Sort so cores show at top
   const myRoster = [...myTeam.roster].sort((a,b)=>(b.isCore-a.isCore)||(b.ovr-a.ovr));
   const oppRoster= [...oppTeam.roster].sort((a,b)=>(b.isCore-a.isCore)||(b.ovr-a.ovr));
 
@@ -933,7 +1064,6 @@ function setupTradeForOpponent(oppTeamId){
     getSel.appendChild(opt);
   });
 
-  // Mini lists
   el("myRosterMini").innerHTML = myRoster.map(p=>`
     <div class="item">
       <button class="linkBtn" data-pid="${p.id}">${escapeHtml(p.name)}</button>
@@ -950,7 +1080,6 @@ function setupTradeForOpponent(oppTeamId){
     </div>
   `).join("");
 
-  // Bind detail clicks
   el("myRosterMini").querySelectorAll("button[data-pid]").forEach(btn=>{
     btn.addEventListener("click", ()=>{
       const pid = Number(btn.getAttribute("data-pid"));
@@ -1000,12 +1129,65 @@ function showPlayerDetail(p){
       </div>
       <div style="height:10px"></div>
       <div class="tiny muted">
-        下一步你可以加：技能/潛力/合約/士氣/傷病，這些都能用同一個 detail modal 擴充。
+        下一步要做「補滿名單/自由市場/選秀/季後賽」都能直接接在這個系統上。
       </div>
     `,
     actions:[{label:"關閉", className:"primary", onClick: closeModal}]
   });
 }
+
+/* ===== Controls: Sim / new season / log ===== */
+el("btnSim1").addEventListener("click", ()=>{
+  if(!state.league){ log("請先完成選隊與選基石。", "warnTxt"); renderAll(); return; }
+  simulateOneDay();
+  renderAll();
+});
+el("btnSim7").addEventListener("click", ()=>{
+  if(!state.league){ log("請先完成選隊與選基石。", "warnTxt"); renderAll(); return; }
+  for(let i=0;i<7;i++){
+    if(state.dayIndex>=state.gamesPerTeam) break;
+    simulateOneDay();
+  }
+  renderAll();
+});
+el("btnSimAll").addEventListener("click", ()=>{
+  if(!state.league){ log("請先完成選隊與選基石。", "warnTxt"); renderAll(); return; }
+  while(state.dayIndex<state.gamesPerTeam){
+    simulateOneDay();
+  }
+  renderAll();
+});
+el("btnNewSeason").addEventListener("click", ()=>{
+  if(!state.league){ log("請先完成選隊與選基石。", "warnTxt"); renderAll(); return; }
+  openModal({
+    title:"開始新賽季",
+    bodyHtml:`<div class="tiny muted">會把全聯盟戰績清零，重新生成賽程。</div>
+             <div class="tiny warnTxt" style="margin-top:8px">（你的球員與交易成果會保留）</div>`,
+    actions:[
+      {label:"取消", className:"ghost", onClick: closeModal},
+      {label:"開始", className:"primary", onClick: ()=>{
+        closeModal();
+        startNewSeason();
+        renderAll();
+      }}
+    ]
+  });
+});
+function startNewSeason(){
+  state.season += 1;
+  state.dayIndex = 0;
+  for(const t of state.league){
+    t.w = 0; t.l = 0;
+  }
+  state.scheduleDays = generateSeasonSchedule(state.league.map(t=>t.id), state.gamesPerTeam);
+  log(`新賽季 S${state.season} 開始（每隊 ${state.gamesPerTeam} 場）。`, "warnTxt");
+  saveState();
+}
+el("btnClearLog").addEventListener("click", ()=>{
+  state.log = [];
+  saveState();
+  renderAll();
+});
 
 /* ===== Reset / Export / Import ===== */
 el("btnReset").addEventListener("click", ()=>{
@@ -1103,6 +1285,8 @@ el("btnImport").addEventListener("click", ()=>{
 /* ===== Main render ===== */
 function renderAll(){
   setPhaseUI();
+  renderLog();
+
   if(state.phase==="TEAM"){
     renderTeamScreen();
   }else if(state.phase==="CORE"){
@@ -1112,6 +1296,13 @@ function renderAll(){
   }else if(state.phase==="TRADE"){
     renderTradeScreen();
   }
+
+  // disable sim buttons unless league ready
+  const ready = !!state.league;
+  el("btnSim1").disabled = !ready;
+  el("btnSim7").disabled = !ready;
+  el("btnSimAll").disabled = !ready;
+  el("btnNewSeason").disabled = !ready;
 }
 </script>
 </body>
