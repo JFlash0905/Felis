@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>NBA GM Simulator v2.0</title>
+<title>NBA GM Simulator v2.0 穩定版</title>
 <style>
 body { font-family: Arial, sans-serif; background:#f2f2f2; }
 #app { max-width: 1000px; margin:auto; padding:20px; }
@@ -21,9 +21,10 @@ select { padding:4px; margin:4px 0; }
 // ===== 基本資料 =====
 const ACTIVE_TEAMS = ["Golden State Warriors","Los Angeles Lakers","Cleveland Cavaliers","San Antonio Spurs","Oklahoma City Thunder"];
 const NBA_PLAYER_POOL = [
-{name:"Stephen Curry",pos:"PG",ovr:88},{name:"LeBron James",pos:"SF",ovr:90},{name:"Kevin Durant",pos:"PF",ovr:89},{name:"Giannis Antetokounmpo",pos:"PF",ovr:91},
-{name:"Luka Dončić",pos:"PG",ovr:89},{name:"Joel Embiid",pos:"C",ovr:90},{name:"Nikola Jokić",pos:"C",ovr:92},{name:"Jayson Tatum",pos:"SF",ovr:87},
-{name:"Ja Morant",pos:"PG",ovr:85},{name:"Devin Booker",pos:"SG",ovr:84},{name:"Donovan Mitchell",pos:"SG",ovr:85},{name:"Trae Young",pos:"PG",ovr:84}
+{name:"Stephen Curry",pos:"PG",ovr:88},{name:"LeBron James",pos:"SF",ovr:90},{name:"Kevin Durant",pos:"PF",ovr:89},
+{name:"Giannis Antetokounmpo",pos:"PF",ovr:91},{name:"Luka Dončić",pos:"PG",ovr:89},{name:"Joel Embiid",pos:"C",ovr:90},
+{name:"Nikola Jokić",pos:"C",ovr:92},{name:"Jayson Tatum",pos:"SF",ovr:87},{name:"Ja Morant",pos:"PG",ovr:85},
+{name:"Devin Booker",pos:"SG",ovr:84},{name:"Donovan Mitchell",pos:"SG",ovr:85},{name:"Trae Young",pos:"PG",ovr:84}
 ];
 
 // ===== 狀態 =====
@@ -45,12 +46,12 @@ const MAX_SIGN=2;
 const MIN_ROSTER_SIZE=8;
 
 // ===== 工具 =====
-function createPlayer(tpl,age=18){return {name:tpl.name,pos:tpl.pos,ovr:tpl.ovr,age,salary:5,assigned:false};}
+function clonePlayer(p){return {...p};}
 function teamPower(roster){return roster.reduce((s,p)=>s+p.ovr,0)/Math.max(roster.length,1);}
 function pickMVP(allTeams){
  let candidates=[];
- Object.values(allTeams).forEach(t=>candidates.push(...t.roster));
- candidates.push(...gameState.roster);
+ Object.values(allTeams).forEach(t=>candidates.push(...t.roster.map(clonePlayer)));
+ candidates.push(...gameState.roster.map(clonePlayer));
  if(candidates.length===0) return null;
  candidates.sort((a,b)=> (b.ovr+Math.random()*5)-(a.ovr+Math.random()*5));
  return candidates[0];
@@ -66,8 +67,8 @@ function startSeason(){
  gameState.freeAgents=[];
  let count=Math.min(6,futureNBAPlayers.length);
  for(let i=0;i<count;i++){
-  let p=createPlayer(futureNBAPlayers.shift(),18);
-  p.assigned=true;
+  let p=clonePlayer(futureNBAPlayers.shift());
+  p.age=18; p.salary=5; p.assigned=true;
   gameState.freeAgents.push(p);
  }
  gameState.drafted=0;
@@ -77,7 +78,7 @@ function startSeason(){
 function signPlayer(i){
  if(gameState.drafted>=MAX_SIGN) return alert("本季最多簽兩人");
  let p=gameState.freeAgents.splice(i,1)[0];
- gameState.roster.push(p);
+ gameState.roster.push(clonePlayer(p));
  gameState.drafted++;
  render();
 }
@@ -91,7 +92,7 @@ function distributeRemaining(){
  const aiNames=Object.keys(gameState.aiTeams);
  gameState.freeAgents.forEach((p,i)=>{
   const team=gameState.aiTeams[aiNames[i%aiNames.length]];
-  if(team.roster.length<MIN_ROSTER_SIZE) team.roster.push(p);
+  if(team.roster.length<MIN_ROSTER_SIZE) team.roster.push(clonePlayer(p));
  });
  gameState.freeAgents=[];
 }
@@ -103,7 +104,7 @@ function fillTeam(r,isAI){
      let p=futureNBAPlayers.find(p=>!p.assigned);
      if(!p) break;
      p.assigned=true;
-     r.push(createPlayer(p,18));
+     r.push(clonePlayer(p));
    }
  }
 }
