@@ -3,12 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>NBA GM Game — Phase I</title>
+  <title>NBA GM Game — Complete (Core90 + FA90 + Rookie200)</title>
   <style>
     :root{
       --bg:#0b0f14;--card:#111827;--panel:#0b1220;--stroke:#243044;
-      --text:#e5e7eb;--muted:#9ca3af;--accent:#22c55e;--warn:#f59e0b;--bad:#ef4444;
-      --blue:#60a5fa;
+      --text:#e5e7eb;--muted:#9ca3af;--accent:#22c55e;--warn:#f59e0b;--bad:#ef4444;--blue:#60a5fa;
     }
     *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans TC",sans-serif}
     body{margin:0;background:linear-gradient(180deg,#070a10,#0b0f14);color:var(--text)}
@@ -67,18 +66,17 @@
     .linkBtn:hover{text-decoration:underline}
     .cols2{display:grid;grid-template-columns:1fr;gap:10px}
     @media(min-width:940px){.cols2{grid-template-columns:1fr 1fr}}
-    .miniList{max-height:280px;overflow:auto;background:var(--panel);border:1px solid var(--stroke);border-radius:12px;padding:8px}
+    .miniList{max-height:300px;overflow:auto;background:var(--panel);border:1px solid var(--stroke);border-radius:12px;padding:8px}
     .miniList .item{padding:8px;border-bottom:1px solid rgba(255,255,255,.06)}
     .miniList .item:last-child{border-bottom:none}
     .log{max-height:220px;overflow:auto;background:var(--panel);border:1px solid var(--stroke);border-radius:12px;padding:10px}
     .log p{margin:6px 0;font-size:13px}
-    /* Modal */
     .modalBackdrop{
       position:fixed;inset:0;background:rgba(0,0,0,.6);
       display:none;align-items:center;justify-content:center;padding:16px;z-index:50;
     }
     .modal{
-      width:min(720px,100%);background:rgba(17,24,39,.97);
+      width:min(760px,100%);background:rgba(17,24,39,.97);
       border:1px solid #263244;border-radius:14px;padding:14px;
     }
     .modal h2{margin:0 0 8px 0;font-size:18px}
@@ -90,8 +88,8 @@
 <body>
 <header>
   <div>
-    <h1>NBA GM Game — Phase I</h1>
-    <div class="muted">基石建隊｜交易｜比賽/賽季/排名｜自由市場（非基石）｜AI補人｜季末選秀｜Reset 需輸入 RESET｜自動存檔</div>
+    <h1>NBA GM Game — Complete</h1>
+    <div class="muted">基石候選90｜自由市場90｜新秀池200（每季吐30）｜休賽季：手動/自動補強｜交易｜賽季｜自動存檔</div>
   </div>
   <div class="row">
     <span class="pill" id="hdrStatus">未選隊</span>
@@ -149,7 +147,7 @@
         </div>
         <div class="tiny muted" style="margin-top:8px">
           1 天 = 全聯盟 15 場。<br/>
-          <span class="warnTxt">季末後會進入「休賽季」：選秀 → 新賽季。</span>
+          <span class="warnTxt">季末會進入休賽季：選秀 → 補強（手動/自動）→ 新賽季。</span>
         </div>
       </div>
 
@@ -190,7 +188,7 @@
       <div id="screenCore" style="display:none">
         <div class="row space">
           <div>
-            <p class="bigTitle">Step 2：選 2–3 位基石球員</p>
+            <p class="bigTitle">Step 2：選 2–3 位基石（候選90）</p>
             <p class="muted tiny" style="margin-top:-2px">選到 2 位才可進主介面，最多 3 位。</p>
           </div>
           <div class="row">
@@ -201,7 +199,7 @@
 
         <div class="panel">
           <div class="row space">
-            <b>基石球員池（現實 NBA 名字）</b>
+            <b>基石候選池</b>
             <span class="pill muted">點卡片選取 / 取消</span>
           </div>
           <div style="height:8px"></div>
@@ -214,7 +212,7 @@
         <div class="row space">
           <div>
             <p class="bigTitle">主介面</p>
-            <div class="muted tiny">看名單、交易、自由市場補人、推賽季、看排名。</div>
+            <div class="muted tiny">名單｜交易｜自由市場補人｜推賽季｜看排名。</div>
           </div>
           <div class="row">
             <span class="pill" id="hubTeamPill">-</span>
@@ -257,7 +255,7 @@
         <div class="row space">
           <div>
             <p class="bigTitle">交易中心（1 換 1）</p>
-            <div class="tiny muted">基石交易代價極高：AI 需求倍率更大。</div>
+            <div class="tiny muted">牽涉基石會更難：倍率更高。</div>
           </div>
           <div class="row">
             <button class="ghost" id="btnBackHubFromTrade">← 回主介面</button>
@@ -314,7 +312,7 @@
         <div class="row space">
           <div>
             <p class="bigTitle">自由市場（非基石補人）</p>
-            <div class="tiny muted">你可以直接簽人進隊；AI 也會在推賽季時補人。</div>
+            <div class="tiny muted">你手動簽人永遠成功；休賽季若選自動補強，會照戰績倒序輪流簽。</div>
           </div>
           <div class="row">
             <button class="ghost" id="btnBackHubFromFA">← 回主介面</button>
@@ -349,7 +347,7 @@
 
           <div class="cols2">
             <div class="panel" style="background:rgba(11,18,32,.8)">
-              <b>可簽球員（Top 40 顯示）</b>
+              <b>可簽球員（Top 60 顯示）</b>
               <div class="tiny muted" style="margin-top:6px">點名字看詳情；按「簽下」進隊。</div>
               <div style="height:8px"></div>
               <div class="miniList" id="faList"></div>
@@ -357,14 +355,14 @@
 
             <div class="panel" style="background:rgba(11,18,32,.8)">
               <b>你的名單</b>
-              <div class="tiny muted" style="margin-top:6px">名單滿了就不能簽（你可以用交易調整）。</div>
+              <div class="tiny muted" style="margin-top:6px">名單滿了就不能簽（可用交易調整）。</div>
               <div style="height:8px"></div>
               <div class="miniList" id="faMyRoster"></div>
             </div>
           </div>
 
           <div class="tiny muted" style="margin-top:10px">
-            <b>休賽季選秀：</b>季末會產生新秀，依排名（倒序）每隊選一位。你到你順位會跳出讓你挑。
+            <b>選秀：</b>季末會從新秀池吐出 30 人（每隊 1 位），依排名倒序選。
           </div>
         </div>
       </div>
@@ -384,16 +382,19 @@
 
 <script>
 /* =========================
-   NBA GM — Phase I
+   NBA GM — COMPLETE
    ========================= */
 
-const LS_KEY = "nba_gm_phaseI_save_v1";
+const LS_KEY = "nba_gm_complete_save_v1";
 
-// 名單上限（你想更真實可改 15）
 const MAX_ROSTER = 12;
-
-// 一季每隊幾場（你想加長直接改）
 const DEFAULT_GAMES_PER_TEAM = 20;
+
+// 休賽季自動補強：補到這個人數（不一定補滿MAX_ROSTER，避免太暴力）
+const OFFSEASON_AUTOFILL_TARGET = 10;
+
+// 季中 AI 簽 FA 的強度（越高越常簽）
+const INSEASON_AI_SIGN_CHANCE = 0.45; // 0~1
 
 const TEAMS = [
   "Atlanta Hawks","Boston Celtics","Brooklyn Nets","Charlotte Hornets","Chicago Bulls",
@@ -415,127 +416,374 @@ function escapeHtml(s){
     .replaceAll("'","&#039;");
 }
 
-/* ===== Player pool (real names, simplified numbers) ===== */
-const NBA_PLAYER_POOL = [
-  {id:1,name:"Nikola Jokic",pos:"C",ovr:98,age:29},
-  {id:2,name:"Giannis Antetokounmpo",pos:"PF",ovr:97,age:30},
-  {id:3,name:"Luka Doncic",pos:"PG",ovr:97,age:26},
-  {id:4,name:"Shai Gilgeous-Alexander",pos:"PG",ovr:95,age:27},
-  {id:5,name:"Joel Embiid",pos:"C",ovr:96,age:31},
-  {id:6,name:"Jayson Tatum",pos:"SF",ovr:94,age:27},
-  {id:7,name:"Stephen Curry",pos:"PG",ovr:95,age:37},
-  {id:8,name:"LeBron James",pos:"SF",ovr:94,age:41},
-  {id:9,name:"Kevin Durant",pos:"SF",ovr:94,age:37},
-  {id:10,name:"Anthony Davis",pos:"PF",ovr:93,age:32},
-  {id:11,name:"Devin Booker",pos:"SG",ovr:93,age:29},
-  {id:12,name:"Kawhi Leonard",pos:"SF",ovr:92,age:34},
-  {id:13,name:"Jimmy Butler",pos:"SF",ovr:91,age:36},
-  {id:14,name:"Damian Lillard",pos:"PG",ovr:92,age:35},
-  {id:15,name:"Ja Morant",pos:"PG",ovr:92,age:26},
-  {id:16,name:"Anthony Edwards",pos:"SG",ovr:93,age:24},
-  {id:17,name:"Donovan Mitchell",pos:"SG",ovr:92,age:29},
-  {id:18,name:"Tyrese Haliburton",pos:"PG",ovr:90,age:26},
-  {id:19,name:"Jalen Brunson",pos:"PG",ovr:89,age:29},
-  {id:20,name:"Jaylen Brown",pos:"SG",ovr:89,age:29},
-  {id:21,name:"Kyrie Irving",pos:"PG",ovr:89,age:33},
-  {id:22,name:"Karl-Anthony Towns",pos:"C",ovr:89,age:30},
-  {id:23,name:"Bam Adebayo",pos:"C",ovr:88,age:28},
-  {id:24,name:"Domantas Sabonis",pos:"C",ovr:88,age:29},
-  {id:25,name:"Zion Williamson",pos:"PF",ovr:88,age:25},
-  {id:26,name:"Paul George",pos:"SF",ovr:88,age:35},
-  {id:27,name:"De'Aaron Fox",pos:"PG",ovr:88,age:28},
-  {id:28,name:"Jamal Murray",pos:"PG",ovr:88,age:28},
-  {id:29,name:"Tyrese Maxey",pos:"SG",ovr:87,age:25},
-  {id:30,name:"Cade Cunningham",pos:"PG",ovr:87,age:24},
-  {id:31,name:"Scottie Barnes",pos:"SF",ovr:87,age:24},
-  {id:32,name:"Paolo Banchero",pos:"PF",ovr:87,age:23},
-  {id:33,name:"Victor Wembanyama",pos:"C",ovr:90,age:22},
-  {id:34,name:"Chet Holmgren",pos:"C",ovr:85,age:23},
-  {id:35,name:"Jalen Williams",pos:"SF",ovr:85,age:24},
-  {id:36,name:"Alperen Sengun",pos:"C",ovr:86,age:23},
-  {id:37,name:"Franz Wagner",pos:"SF",ovr:86,age:24},
-  {id:38,name:"Mikal Bridges",pos:"SF",ovr:86,age:29},
-  {id:39,name:"Brandon Ingram",pos:"SF",ovr:86,age:28},
-  {id:40,name:"Lauri Markkanen",pos:"PF",ovr:86,age:28},
-  {id:41,name:"Jaren Jackson Jr.",pos:"PF",ovr:86,age:26},
-  {id:42,name:"Desmond Bane",pos:"SG",ovr:85,age:27},
-  {id:43,name:"DeMar DeRozan",pos:"SF",ovr:85,age:36},
-  {id:44,name:"Bradley Beal",pos:"SG",ovr:84,age:32},
-  {id:45,name:"Jrue Holiday",pos:"PG",ovr:84,age:35},
-  {id:46,name:"Pascal Siakam",pos:"PF",ovr:85,age:32},
-  {id:47,name:"Julius Randle",pos:"PF",ovr:84,age:31},
-  {id:48,name:"Kristaps Porzingis",pos:"C",ovr:84,age:30},
-  {id:49,name:"Deandre Ayton",pos:"C",ovr:83,age:27},
-  {id:50,name:"Darius Garland",pos:"PG",ovr:84,age:26},
-  {id:51,name:"Evan Mobley",pos:"PF",ovr:84,age:24},
-  {id:52,name:"Jarrett Allen",pos:"C",ovr:83,age:27},
-  {id:53,name:"OG Anunoby",pos:"SF",ovr:83,age:28},
-  {id:54,name:"Dejounte Murray",pos:"PG",ovr:83,age:29},
-  {id:55,name:"Myles Turner",pos:"C",ovr:82,age:29},
-  {id:56,name:"Zach LaVine",pos:"SG",ovr:84,age:30},
-  {id:57,name:"James Harden",pos:"SG",ovr:84,age:36},
-  {id:58,name:"Russell Westbrook",pos:"PG",ovr:78,age:37},
-  {id:59,name:"Klay Thompson",pos:"SG",ovr:79,age:35},
-  {id:60,name:"Draymond Green",pos:"PF",ovr:79,age:35},
-  {id:61,name:"LaMelo Ball",pos:"PG",ovr:85,age:24},
-  {id:62,name:"Devin Vassell",pos:"SG",ovr:80,age:25},
-  {id:63,name:"Jalen Green",pos:"SG",ovr:80,age:24},
-  {id:64,name:"Fred VanVleet",pos:"PG",ovr:81,age:31},
-  {id:65,name:"Jerami Grant",pos:"PF",ovr:81,age:31},
-  {id:66,name:"Michael Porter Jr.",pos:"SF",ovr:81,age:27},
-  {id:67,name:"Aaron Gordon",pos:"PF",ovr:80,age:30},
-  {id:68,name:"Austin Reaves",pos:"SG",ovr:80,age:27},
-  {id:69,name:"Andrew Wiggins",pos:"SF",ovr:78,age:30},
-  {id:70,name:"Chris Paul",pos:"PG",ovr:77,age:40},
-  {id:71,name:"Kyle Kuzma",pos:"PF",ovr:81,age:30},
-  {id:72,name:"Jordan Poole",pos:"SG",ovr:81,age:26},
-  {id:73,name:"Rudy Gobert",pos:"C",ovr:88,age:33},
-  {id:74,name:"Brook Lopez",pos:"C",ovr:81,age:37},
-  {id:75,name:"Bobby Portis",pos:"PF",ovr:80,age:30},
-  {id:76,name:"Dillon Brooks",pos:"SF",ovr:78,age:29},
-  {id:77,name:"Caris LeVert",pos:"SG",ovr:78,age:31},
-  {id:78,name:"Spencer Dinwiddie",pos:"PG",ovr:77,age:32},
-  {id:79,name:"Rui Hachimura",pos:"PF",ovr:78,age:27},
-  {id:80,name:"Scoot Henderson",pos:"PG",ovr:77,age:22},
-  {id:81,name:"Brandon Miller",pos:"SF",ovr:78,age:23},
-  {id:82,name:"Keegan Murray",pos:"PF",ovr:78,age:25},
-  {id:83,name:"Jabari Smith Jr.",pos:"PF",ovr:78,age:22},
-  {id:84,name:"Amen Thompson",pos:"SG",ovr:77,age:22},
-  {id:85,name:"Ausar Thompson",pos:"SF",ovr:77,age:22},
+/* =========================================================
+   DATA: Core 90 + FA 90 => Single ACTIVE pool (180)
+   Rookie pool: 200 (released gradually)
+   ========================================================= */
+
+// ✅ 基石候選 90（真實 NBA 名字）
+const CORE_90 = [
+  {name:"Nikola Jokic",pos:"C"},
+  {name:"Giannis Antetokounmpo",pos:"PF"},
+  {name:"Luka Doncic",pos:"PG"},
+  {name:"Shai Gilgeous-Alexander",pos:"PG"},
+  {name:"Joel Embiid",pos:"C"},
+  {name:"Jayson Tatum",pos:"SF"},
+  {name:"Stephen Curry",pos:"PG"},
+  {name:"LeBron James",pos:"SF"},
+  {name:"Kevin Durant",pos:"SF"},
+  {name:"Anthony Davis",pos:"PF"},
+  {name:"Devin Booker",pos:"SG"},
+  {name:"Kawhi Leonard",pos:"SF"},
+  {name:"Jimmy Butler",pos:"SF"},
+  {name:"Damian Lillard",pos:"PG"},
+  {name:"Ja Morant",pos:"PG"},
+  {name:"Anthony Edwards",pos:"SG"},
+  {name:"Donovan Mitchell",pos:"SG"},
+  {name:"Tyrese Haliburton",pos:"PG"},
+  {name:"Jalen Brunson",pos:"PG"},
+  {name:"Jaylen Brown",pos:"SG"},
+  {name:"Kyrie Irving",pos:"PG"},
+  {name:"Karl-Anthony Towns",pos:"C"},
+  {name:"Bam Adebayo",pos:"C"},
+  {name:"Domantas Sabonis",pos:"C"},
+  {name:"Paul George",pos:"SF"},
+  {name:"De'Aaron Fox",pos:"PG"},
+  {name:"Jamal Murray",pos:"PG"},
+  {name:"Tyrese Maxey",pos:"SG"},
+  {name:"Zion Williamson",pos:"PF"},
+  {name:"Trae Young",pos:"PG"},
+  {name:"Victor Wembanyama",pos:"C"},
+  {name:"Paolo Banchero",pos:"PF"},
+  {name:"Scottie Barnes",pos:"SF"},
+  {name:"Cade Cunningham",pos:"PG"},
+  {name:"Evan Mobley",pos:"PF"},
+  {name:"Franz Wagner",pos:"SF"},
+  {name:"Alperen Sengun",pos:"C"},
+  {name:"Jaren Jackson Jr.",pos:"PF"},
+  {name:"Desmond Bane",pos:"SG"},
+  {name:"Mikal Bridges",pos:"SF"},
+  {name:"Brandon Ingram",pos:"SF"},
+  {name:"Lauri Markkanen",pos:"PF"},
+  {name:"Julius Randle",pos:"PF"},
+  {name:"Pascal Siakam",pos:"PF"},
+  {name:"Rudy Gobert",pos:"C"},
+  {name:"Kristaps Porzingis",pos:"C"},
+  {name:"Jrue Holiday",pos:"PG"},
+  {name:"James Harden",pos:"SG"},
+  {name:"DeMar DeRozan",pos:"SF"},
+  {name:"Deandre Ayton",pos:"C"},
+  {name:"Darius Garland",pos:"PG"},
+  {name:"Dejounte Murray",pos:"PG"},
+  {name:"LaMelo Ball",pos:"PG"},
+  {name:"Jarrett Allen",pos:"C"},
+  {name:"Zach LaVine",pos:"SG"},
+  {name:"Draymond Green",pos:"PF"},
+  {name:"Klay Thompson",pos:"SG"},
+  {name:"Chris Paul",pos:"PG"},
+  {name:"Bradley Beal",pos:"SG"},
+  {name:"Michael Porter Jr.",pos:"SF"},
+  {name:"Aaron Gordon",pos:"PF"},
+  {name:"CJ McCollum",pos:"SG"},
+  {name:"Jalen Williams",pos:"SF"},
+  {name:"Chet Holmgren",pos:"C"},
+  {name:"De'Aaron Fox",pos:"PG"}, // (duplicate on purpose -> will be deduped)
+  {name:"Tyrese Haliburton",pos:"PG"}, // (duplicate -> deduped)
+  {name:"Khris Middleton",pos:"SF"},
+  {name:"Tobias Harris",pos:"PF"},
+  {name:"Myles Turner",pos:"C"},
+  {name:"OG Anunoby",pos:"SF"},
+  {name:"Jalen Johnson",pos:"PF"},
+  {name:"Scottie Barnes",pos:"SF"}, // duplicate -> deduped
+  {name:"Devin Vassell",pos:"SG"},
+  {name:"Anfernee Simons",pos:"SG"},
+  {name:"Jabari Smith Jr.",pos:"PF"},
+  {name:"Keegan Murray",pos:"PF"},
+  {name:"Brandon Miller",pos:"SF"},
+  {name:"Scoot Henderson",pos:"PG"},
+  {name:"Amen Thompson",pos:"SG"},
+  {name:"Ausar Thompson",pos:"SF"},
+  {name:"Jalen Duren",pos:"C"},
+  {name:"Shaedon Sharpe",pos:"SG"},
+  {name:"Jerami Grant",pos:"PF"},
+  {name:"Deandre Hunter",pos:"SF"},
+  {name:"Cameron Johnson",pos:"SF"},
+  {name:"Kyle Kuzma",pos:"PF"},
+  {name:"Fred VanVleet",pos:"PG"},
+  {name:"Austin Reaves",pos:"SG"},
+  {name:"Marcus Smart",pos:"PG"},
+  {name:"Derrick White",pos:"PG"}
 ];
 
-function buildCorePool(){
-  const sorted = [...NBA_PLAYER_POOL].sort((a,b)=>b.ovr-a.ovr);
-  return sorted.slice(0, 24).map(p=>({...p}));
-}
-function buildFreeAgentPool(){
-  const coreIds = new Set(buildCorePool().map(p=>p.id));
-  return NBA_PLAYER_POOL
-    .filter(p => !coreIds.has(p.id))
-    .map(p => ({ ...p, isCore:false, team:null }));
+// ✅ 自由市場常駐 90（真實 NBA 名字，非基石定位）
+const FA_90 = [
+  {name:"Brook Lopez",pos:"C"},
+  {name:"Bobby Portis",pos:"PF"},
+  {name:"Malcolm Brogdon",pos:"PG"},
+  {name:"Terry Rozier",pos:"PG"},
+  {name:"Jordan Clarkson",pos:"SG"},
+  {name:"D'Angelo Russell",pos:"PG"},
+  {name:"Buddy Hield",pos:"SG"},
+  {name:"Josh Hart",pos:"SF"},
+  {name:"Clint Capela",pos:"C"},
+  {name:"Nikola Vucevic",pos:"C"},
+  {name:"Jakob Poeltl",pos:"C"},
+  {name:"Jonas Valanciunas",pos:"C"},
+  {name:"John Collins",pos:"PF"},
+  {name:"Collin Sexton",pos:"SG"},
+  {name:"Bojan Bogdanovic",pos:"SF"},
+  {name:"Bogdan Bogdanovic",pos:"SG"},
+  {name:"Harrison Barnes",pos:"SF"},
+  {name:"PJ Washington",pos:"PF"},
+  {name:"Jaden McDaniels",pos:"SF"},
+  {name:"Herb Jones",pos:"SF"},
+  {name:"Trey Murphy III",pos:"SF"},
+  {name:"Alex Caruso",pos:"SG"},
+  {name:"Kentavious Caldwell-Pope",pos:"SG"},
+  {name:"Bruce Brown",pos:"SG"},
+  {name:"Spencer Dinwiddie",pos:"PG"},
+  {name:"Caris LeVert",pos:"SG"},
+  {name:"Dillon Brooks",pos:"SF"},
+  {name:"Kyle Lowry",pos:"PG"},
+  {name:"Lonzo Ball",pos:"PG"},
+  {name:"Evan Fournier",pos:"SG"},
+  {name:"Kevin Love",pos:"PF"},
+  {name:"Al Horford",pos:"C"},
+  {name:"Steven Adams",pos:"C"},
+  {name:"Andre Drummond",pos:"C"},
+  {name:"Jusuf Nurkic",pos:"C"},
+  {name:"Kelly Olynyk",pos:"C"},
+  {name:"Jae Crowder",pos:"PF"},
+  {name:"Royce O'Neale",pos:"SF"},
+  {name:"Reggie Jackson",pos:"PG"},
+  {name:"Patty Mills",pos:"PG"},
+  {name:"Tim Hardaway Jr.",pos:"SG"},
+  {name:"Luke Kennard",pos:"SG"},
+  {name:"Kyle Anderson",pos:"PF"},
+  {name:"Daniel Gafford",pos:"C"},
+  {name:"Mitchell Robinson",pos:"C"},
+  {name:"Isaiah Hartenstein",pos:"C"},
+  {name:"Naz Reid",pos:"C"},
+  {name:"Gary Trent Jr.",pos:"SG"},
+  {name:"Norman Powell",pos:"SG"},
+  {name:"Ivica Zubac",pos:"C"},
+  {name:"Seth Curry",pos:"SG"},
+  {name:"Joe Ingles",pos:"SF"},
+  {name:"Eric Gordon",pos:"SG"},
+  {name:"Danny Green",pos:"SG"},
+  {name:"Mike Conley",pos:"PG"},
+  {name:"Russell Westbrook",pos:"PG"},
+  {name:"Derrick Rose",pos:"PG"},
+  {name:"Patrick Beverley",pos:"PG"},
+  {name:"Cory Joseph",pos:"PG"},
+  {name:"Gary Payton II",pos:"SG"},
+  {name:"Tyus Jones",pos:"PG"},
+  {name:"Monte Morris",pos:"PG"},
+  {name:"Caleb Martin",pos:"SF"},
+  {name:"Max Strus",pos:"SG"},
+  {name:"Duncan Robinson",pos:"SF"},
+  {name:"Josh Richardson",pos:"SG"},
+  {name:"Cam Payne",pos:"PG"},
+  {name:"Gordon Hayward",pos:"SF"},
+  {name:"Robert Covington",pos:"PF"},
+  {name:"P.J. Tucker",pos:"PF"},
+  {name:"Davis Bertans",pos:"PF"},
+  {name:"Joe Harris",pos:"SF"},
+  {name:"Rui Hachimura",pos:"PF"},
+  {name:"Christian Wood",pos:"C"},
+  {name:"Mo Bamba",pos:"C"},
+  {name:"Cedi Osman",pos:"SF"},
+  {name:"Jae'Sean Tate",pos:"SF"},
+  {name:"Cameron Reddish",pos:"SF"},
+  {name:"Dennis Schroder",pos:"PG"},
+  {name:"Alec Burks",pos:"SG"},
+  {name:"Reggie Bullock",pos:"SF"},
+  {name:"Dario Saric",pos:"PF"},
+  {name:"Mason Plumlee",pos:"C"},
+  {name:"Jeff Green",pos:"PF"},
+  {name:"Thaddeus Young",pos:"PF"},
+  {name:"Goran Dragic",pos:"PG"},
+  {name:"Markieff Morris",pos:"PF"},
+  {name:"Marcus Morris",pos:"PF"},
+  {name:"Shake Milton",pos:"SG"},
+  {name:"Javonte Green",pos:"SF"},
+  {name:"Delon Wright",pos:"PG"},
+  {name:"Torrey Craig",pos:"SF"}
+];
+
+// ✅ 新秀池 200（真實 NBA 名字；每季只吐 30）
+const ROOKIE_200 = [
+  // Modern / young
+  {name:"Bilal Coulibaly",pos:"SF"},{name:"Jarace Walker",pos:"PF"},{name:"Cam Whitmore",pos:"SF"},
+  {name:"Taylor Hendricks",pos:"PF"},{name:"Cason Wallace",pos:"SG"},{name:"Brandin Podziemski",pos:"SG"},
+  {name:"Jaime Jaquez Jr.",pos:"SF"},{name:"Dereck Lively II",pos:"C"},{name:"Keyonte George",pos:"PG"},
+  {name:"Gradey Dick",pos:"SG"},{name:"Ausar Thompson",pos:"SF"},{name:"Amen Thompson",pos:"SG"},
+  {name:"Scoot Henderson",pos:"PG"},{name:"Brandon Miller",pos:"SF"},{name:"Jalen Duren",pos:"C"},
+  {name:"Shaedon Sharpe",pos:"SG"},{name:"Tari Eason",pos:"PF"},{name:"Jeremy Sochan",pos:"PF"},
+  {name:"Walker Kessler",pos:"C"},{name:"Bennedict Mathurin",pos:"SG"},{name:"Jaden Ivey",pos:"SG"},
+  {name:"Keegan Murray",pos:"PF"},{name:"Jabari Smith Jr.",pos:"PF"},{name:"Josh Giddey",pos:"PG"},
+  {name:"Franz Wagner",pos:"SF"},{name:"Evan Mobley",pos:"PF"},{name:"Scottie Barnes",pos:"SF"},
+  {name:"Paolo Banchero",pos:"PF"},{name:"Cade Cunningham",pos:"PG"},{name:"Jalen Green",pos:"SG"},
+  {name:"RJ Barrett",pos:"SF"},{name:"Zion Williamson",pos:"PF"},{name:"Ja Morant",pos:"PG"},
+  {name:"Trae Young",pos:"PG"},{name:"Deandre Ayton",pos:"C"},{name:"Jaren Jackson Jr.",pos:"PF"},
+  {name:"De'Aaron Fox",pos:"PG"},{name:"Donovan Mitchell",pos:"SG"},{name:"Jayson Tatum",pos:"SF"},
+  {name:"Jaylen Brown",pos:"SG"},{name:"Bam Adebayo",pos:"C"},{name:"Tyrese Maxey",pos:"SG"},
+  {name:"Darius Garland",pos:"PG"},{name:"LaMelo Ball",pos:"PG"},{name:"Anthony Edwards",pos:"SG"},
+  {name:"Victor Wembanyama",pos:"C"},{name:"Chet Holmgren",pos:"C"},{name:"Jalen Williams",pos:"SF"},
+  // Slight older / still real
+  {name:"Devin Booker",pos:"SG"},{name:"Karl-Anthony Towns",pos:"C"},{name:"Nikola Jokic",pos:"C"},
+  {name:"Giannis Antetokounmpo",pos:"PF"},{name:"Joel Embiid",pos:"C"},{name:"Luka Doncic",pos:"PG"},
+  {name:"Shai Gilgeous-Alexander",pos:"PG"},{name:"Tyrese Haliburton",pos:"PG"},{name:"Jamal Murray",pos:"PG"},
+  {name:"DeMar DeRozan",pos:"SF"},{name:"Jimmy Butler",pos:"SF"},{name:"Kyrie Irving",pos:"PG"},
+  {name:"Kawhi Leonard",pos:"SF"},{name:"Paul George",pos:"SF"},{name:"Damian Lillard",pos:"PG"},
+  // Historical stars & solid pros (all real)
+  {name:"Derrick Rose",pos:"PG"},{name:"Blake Griffin",pos:"PF"},{name:"John Wall",pos:"PG"},
+  {name:"Klay Thompson",pos:"SG"},{name:"Draymond Green",pos:"PF"},{name:"Bradley Beal",pos:"SG"},
+  {name:"CJ McCollum",pos:"SG"},{name:"Rudy Gobert",pos:"C"},{name:"Pascal Siakam",pos:"PF"},
+  {name:"Kristaps Porzingis",pos:"C"},{name:"Jrue Holiday",pos:"PG"},{name:"James Harden",pos:"SG"},
+  {name:"Stephen Curry",pos:"PG"},{name:"Kevin Durant",pos:"SF"},{name:"LeBron James",pos:"SF"},
+  {name:"Anthony Davis",pos:"PF"},{name:"Chris Paul",pos:"PG"},{name:"Russell Westbrook",pos:"PG"},
+  {name:"Kevin Love",pos:"PF"},{name:"Kyle Lowry",pos:"PG"},{name:"DeAndre Jordan",pos:"C"},
+  {name:"LaMarcus Aldridge",pos:"PF"},{name:"Paul Pierce",pos:"SF"},{name:"Ray Allen",pos:"SG"},
+  {name:"Kevin Garnett",pos:"PF"},{name:"Tim Duncan",pos:"PF"},{name:"Dirk Nowitzki",pos:"PF"},
+  {name:"Steve Nash",pos:"PG"},{name:"Allen Iverson",pos:"SG"},{name:"Tracy McGrady",pos:"SG"},
+  {name:"Vince Carter",pos:"SG"},{name:"Carmelo Anthony",pos:"SF"},{name:"Dwyane Wade",pos:"SG"},
+  {name:"Chris Bosh",pos:"PF"},{name:"Shaquille O'Neal",pos:"C"},{name:"Kobe Bryant",pos:"SG"},
+  {name:"Michael Jordan",pos:"SG"},{name:"Scottie Pippen",pos:"SF"},{name:"Hakeem Olajuwon",pos:"C"},
+  {name:"David Robinson",pos:"C"},{name:"Patrick Ewing",pos:"C"},{name:"Karl Malone",pos:"PF"},
+  {name:"John Stockton",pos:"PG"},{name:"Charles Barkley",pos:"PF"},{name:"Magic Johnson",pos:"PG"},
+  {name:"Larry Bird",pos:"SF"},{name:"Kareem Abdul-Jabbar",pos:"C"},{name:"Wilt Chamberlain",pos:"C"},
+  {name:"Bill Russell",pos:"C"},{name:"Julius Erving",pos:"SF"},{name:"Isiah Thomas",pos:"PG"},
+  {name:"Clyde Drexler",pos:"SG"},{name:"Dominique Wilkins",pos:"SF"},{name:"James Worthy",pos:"SF"},
+  {name:"Reggie Miller",pos:"SG"},{name:"Gary Payton",pos:"PG"},{name:"Shawn Kemp",pos:"PF"},
+  {name:"Chris Webber",pos:"PF"},{name:"Jason Kidd",pos:"PG"},{name:"Grant Hill",pos:"SF"},
+  {name:"Penny Hardaway",pos:"PG"},{name:"Alonzo Mourning",pos:"C"},{name:"Dikembe Mutombo",pos:"C"},
+  {name:"Yao Ming",pos:"C"},{name:"Tracy McGrady",pos:"SG"}, // duplicate -> deduped
+  {name:"Manu Ginobili",pos:"SG"},{name:"Tony Parker",pos:"PG"},{name:"Chauncey Billups",pos:"PG"},
+  {name:"Ben Wallace",pos:"C"},{name:"Rip Hamilton",pos:"SG"},{name:"Caron Butler",pos:"SF"},
+  {name:"Gilbert Arenas",pos:"PG"},{name:"Amar'e Stoudemire",pos:"PF"},{name:"Shawn Marion",pos:"PF"},
+  {name:"Metta World Peace",pos:"SF"},{name:"Rashard Lewis",pos:"SF"},{name:"Antawn Jamison",pos:"PF"},
+  {name:"Jermaine O'Neal",pos:"C"},{name:"Peja Stojakovic",pos:"SF"},{name:"Mike Bibby",pos:"PG"},
+  {name:"Baron Davis",pos:"PG"},{name:"Deron Williams",pos:"PG"},{name:"Carlos Boozer",pos:"PF"},
+  {name:"Andrew Bynum",pos:"C"},{name:"Pau Gasol",pos:"PF"},{name:"Marc Gasol",pos:"C"},
+  {name:"Zach Randolph",pos:"PF"},{name:"Paul Millsap",pos:"PF"},{name:"David West",pos:"PF"},
+  {name:"Joe Johnson",pos:"SG"},{name:"Jamal Crawford",pos:"SG"},{name:"Jason Terry",pos:"SG"},
+  {name:"Michael Redd",pos:"SG"},{name:"Brandon Roy",pos:"SG"},{name:"Rudy Gay",pos:"SF"},
+  {name:"Andre Iguodala",pos:"SF"},{name:"Danny Granger",pos:"SF"},{name:"Josh Smith",pos:"PF"},
+  {name:"Tyson Chandler",pos:"C"},{name:"Joakim Noah",pos:"C"},{name:"Luol Deng",pos:"SF"},
+  {name:"Kyle Korver",pos:"SG"},{name:"J.J. Redick",pos:"SG"},{name:"Shane Battier",pos:"SF"},
+  {name:"Tayshaun Prince",pos:"SF"},{name:"Mike Conley",pos:"PG"},{name:"Marc Gasol",pos:"C"}, // dup -> deduped
+  {name:"DeMarcus Cousins",pos:"C"},{name:"John Collins",pos:"PF"},{name:"Kemba Walker",pos:"PG"},
+  {name:"Isaiah Thomas",pos:"PG"}, // may conflict with Isiah Thomas; name differs -> ok
+  {name:"Gordon Hayward",pos:"SF"},{name:"Brad Stevens",pos:"SF"} // NOT NBA player -> will be filtered
+];
+
+// -- Dedup + sanitize helper for lists --
+function normalizeName(n){ return (n||"").trim(); }
+function dedupListByName(list){
+  const seen = new Set();
+  const out = [];
+  for(const x of list){
+    const name = normalizeName(x.name);
+    if(!name) continue;
+    if(seen.has(name)) continue;
+    seen.add(name);
+    out.push({name, pos:x.pos});
+  }
+  return out;
 }
 
-/* ====== State machine ======
-   phase: "TEAM" -> "CORE" -> "HUB" -> "TRADE" -> "FA"
-*/
+// filter obvious non-player (very light rule; you can delete any weird names freely)
+function filterLikelyNBAPlayers(list){
+  // If you see any name that isn't a player, just remove it from arrays above.
+  // Here we auto-remove a couple known non-players from the rookie list.
+  const banned = new Set(["Brad Stevens"]);
+  return list.filter(x=>!banned.has(normalizeName(x.name)));
+}
+
+/* =========================================================
+   Build ACTIVE pool (single pool) from Core90 + FA90
+   ========================================================= */
+const CORE_90_CLEAN = dedupListByName(CORE_90);
+const FA_90_CLEAN = dedupListByName(FA_90);
+
+// We ensure ACTIVE pool is unique by name across both.
+function buildActivePool(){
+  const seen = new Set();
+  const add = (arr, tier)=>arr.forEach(x=>{
+    const name = normalizeName(x.name);
+    if(seen.has(name)) return;
+    seen.add(name);
+    ACTIVE.push(makeActivePlayer(name, x.pos, tier));
+  });
+
+  const ACTIVE = [];
+  add(CORE_90_CLEAN, "core");
+  add(FA_90_CLEAN, "fa");
+
+  // if you really want EXACT 180, ensure arrays are 90+90 unique.
+  return ACTIVE;
+}
+
+// Generate OVR/age ranges by tier; keeps game balanced.
+function makeActivePlayer(name, pos, tier){
+  const baseId = hashToId(name);
+  let ovr, age;
+  if(tier==="core"){
+    ovr = rand(86, 98);
+    age = rand(23, 35);
+  }else{
+    ovr = rand(74, 85);
+    age = rand(24, 36);
+  }
+  return { id: baseId, name, pos, ovr, age, isCore:false, team:null, rookie:false };
+}
+
+// stable-ish ID per name
+function hashToId(str){
+  let h = 2166136261;
+  for(let i=0;i<str.length;i++){
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  h = (h>>>0) % 900000 + 1000;
+  return h;
+}
+
+const ACTIVE_POOL = buildActivePool();
+
+// Rookie pool cleaned (dedup + filter)
+const ROOKIE_POOL_200 = dedupListByName(filterLikelyNBAPlayers(ROOKIE_200));
+
+/* =========================================================
+   State
+   ========================================================= */
 function defaultState(){
   return {
-    version: 4,
+    version: 10,
     phase: "TEAM",
     teamLocked: false,
     userTeam: null,
     userTeamId: null,
-    corePool: buildCorePool(),
+
+    // pools
+    activePool: ACTIVE_POOL,          // single pool
+    rookiePool: ROOKIE_POOL_200,      // 200-ish (dedup may shrink slightly if duplicates exist)
+    rookieCursor: 0,                  // releases over seasons
+
+    corePool: [],                     // generated from activePool
     chosenCoreIds: [],
+
     league: null,
-    // non-core
-    freeAgents: buildFreeAgentPool(),
-    // season
+    freeAgents: [],                   // generated from activePool (excluding cores assigned to teams)
+
     season: 1,
     gamesPerTeam: DEFAULT_GAMES_PER_TEAM,
     dayIndex: 0,
     scheduleDays: [],
-    offseason: { active:false, draftDone:false, rookies:[] },
+
+    offseason: { active:false, draftDone:false, faDone:false, rookies:[] },
+
     log: [],
     createdAt: Date.now(),
     updatedAt: Date.now(),
@@ -543,10 +791,12 @@ function defaultState(){
 }
 
 let state = loadState() ?? defaultState();
-syncLegacyStateIfNeeded();
+syncState();
 renderAll();
 
-/* ====== Persistence ====== */
+/* =========================================================
+   Persistence
+   ========================================================= */
 function saveState(){
   state.updatedAt = Date.now();
   localStorage.setItem(LS_KEY, JSON.stringify(state));
@@ -563,30 +813,31 @@ function loadState(){
 function hardReset(){
   localStorage.removeItem(LS_KEY);
   state = defaultState();
+  syncState();
   renderAll();
 }
+function syncState(){
+  state.log = state.log || [];
+  state.offseason = state.offseason || {active:false,draftDone:false,faDone:false,rookies:[]};
+  state.activePool = state.activePool || ACTIVE_POOL;
+  state.rookiePool = state.rookiePool || ROOKIE_POOL_200;
+  state.rookieCursor = state.rookieCursor ?? 0;
 
-function syncLegacyStateIfNeeded(){
-  if(!state.corePool || !Array.isArray(state.corePool) || state.corePool.length===0){
-    state.corePool = buildCorePool();
-  }
-  if(!state.log) state.log = [];
-  if(!state.gamesPerTeam) state.gamesPerTeam = DEFAULT_GAMES_PER_TEAM;
-  if(!state.scheduleDays) state.scheduleDays = [];
-  if(!state.freeAgents || !Array.isArray(state.freeAgents)){
-    state.freeAgents = buildFreeAgentPool();
-  }
-  if(!state.offseason) state.offseason = { active:false, draftDone:false, rookies:[] };
+  // regenerate corePool from activePool each load (stable)
+  state.corePool = buildCorePoolFromActive(state.activePool);
 
-  // regenerate schedule if missing
   if(state.league && state.league.length===30 && (!state.scheduleDays || state.scheduleDays.length===0)){
-    state.dayIndex = state.dayIndex ?? 0;
     state.scheduleDays = generateSeasonSchedule(state.league.map(t=>t.id), state.gamesPerTeam);
-    saveState();
   }
+  if(state.league && (!state.freeAgents || !Array.isArray(state.freeAgents))){
+    state.freeAgents = buildFreeAgentPoolFromActive();
+  }
+  saveState();
 }
 
-/* ====== Modal helper ====== */
+/* =========================================================
+   Modal helper
+   ========================================================= */
 function openModal({title, bodyHtml, actions}){
   el("modalTitle").textContent = title;
   el("modalBody").innerHTML = bodyHtml;
@@ -606,17 +857,61 @@ el("modalBackdrop").addEventListener("click",(e)=>{
   if(e.target === el("modalBackdrop")) closeModal();
 });
 
-/* ===== League helpers ===== */
+/* =========================================================
+   League + Pools logic
+   ========================================================= */
+function buildCorePoolFromActive(active){
+  // "core candidates" are top 90 by ovr inside active pool
+  const sorted = [...active].sort((a,b)=>b.ovr-a.ovr);
+  return sorted.slice(0, 90).map(p=>({...p}));
+}
+
 function buildLeague(teamNames){
   return teamNames.map((name, id)=>({ id, name, w:0, l:0, roster:[] }));
 }
-function aiPickCoresFromPool(pool, usedIds, min=2, max=3){
+
+function allUsedNamesSet(){
+  const used = new Set();
+  // league
+  if(state.league){
+    for(const t of state.league){
+      for(const p of (t.roster||[])) used.add(p.name);
+    }
+  }
+  // freeAgents
+  if(state.freeAgents){
+    for(const p of state.freeAgents) used.add(p.name);
+  }
+  // cores chosen but not yet assigned (core screen)
+  if(state.chosenCoreIds && state.corePool){
+    const chosenSet = new Set(state.chosenCoreIds);
+    for(const p of state.corePool){
+      if(chosenSet.has(p.id)) used.add(p.name);
+    }
+  }
+  return used;
+}
+
+function buildFreeAgentPoolFromActive(){
+  // Free agents are ALL active players not currently on any team roster.
+  const usedNames = new Set();
+  if(state.league){
+    for(const t of state.league){
+      for(const p of (t.roster||[])) usedNames.add(p.name);
+    }
+  }
+  // Start from active pool; if not in used, it's FA
+  return state.activePool
+    .filter(p=>!usedNames.has(p.name))
+    .map(p=>({ ...p, isCore:false, team:null, rookie:false }));
+}
+
+function aiPickCoresFromCorePool(corePool, usedIds, min=2, max=3){
   const need = rand(min, max);
   const picked = [];
   const pickedPos = new Set();
 
-  const candidates = pool.filter(p=>!usedIds.has(p.id));
-  candidates.sort((a,b)=>b.ovr-a.ovr);
+  const candidates = corePool.filter(p=>!usedIds.has(p.id)).sort((a,b)=>b.ovr-a.ovr);
 
   for(const p of candidates){
     if(picked.length>=need) break;
@@ -637,7 +932,9 @@ function aiPickCoresFromPool(pool, usedIds, min=2, max=3){
   return picked;
 }
 
-/* ===== Trade logic (your 3.B) ===== */
+/* =========================================================
+   Value + Trade rules
+   ========================================================= */
 function playerValue(p){
   let v = p.ovr;
   if(p.isCore) v += 22;
@@ -674,7 +971,9 @@ function doTrade(oppTeamId, givePlayerId, getPlayerId){
   return { ok:true, give, get, mult, giveV, getV };
 }
 
-/* ===== Free Agency (non-core into team) ===== */
+/* =========================================================
+   Free Agency
+   ========================================================= */
 function rosterFull(team){ return (team.roster?.length ?? 0) >= MAX_ROSTER; }
 
 function signFreeAgent(teamId, playerId){
@@ -687,43 +986,14 @@ function signFreeAgent(teamId, playerId){
   const p = state.freeAgents[idx];
   state.freeAgents.splice(idx,1);
 
-  team.roster.push({ ...p, isCore:false, team: team.name });
+  team.roster.push({ ...p, isCore:false, team: team.name, rookie: !!p.rookie });
   saveState();
   return { ok:true, player:p };
 }
 
-// AI 每天有機率補 0~1 人（避免太快被簽光）
-function aiSignFreeAgentsDaily(){
-  if(!state.league || !state.freeAgents || state.freeAgents.length===0) return;
-
-  // 優先把名單較少的隊補到更像真聯盟
-  const teams = [...state.league].sort((a,b)=>(a.roster.length-b.roster.length));
-  for(const team of teams){
-    if(state.freeAgents.length===0) break;
-    if(rosterFull(team)) continue;
-
-    // 60% 機率今天補一人（推賽季時聯盟會慢慢變厚）
-    if(Math.random() > 0.60) continue;
-
-    // 以 OVR 為主，稍微偏向隊內缺的位置（簡化版）
-    const needPos = mostNeededPos(team);
-    let candidates = [...state.freeAgents];
-    candidates.sort((x,y)=> (y.ovr-x.ovr) - (x.age-y.age));
-
-    let pick = candidates.find(p=>p.pos===needPos) || candidates[0];
-    if(!pick) continue;
-
-    const res = signFreeAgent(team.id, pick.id);
-    if(res.ok){
-      // 不要刷太多 log，只記錄強一點的
-      if(res.player.ovr >= 83) log(`AI 簽下：${team.name} 簽下 ${res.player.name}（${res.player.pos} ${res.player.ovr}）`, "muted");
-    }
-  }
-}
 function mostNeededPos(team){
   const count = {PG:0,SG:0,SF:0,PF:0,C:0};
-  for(const p of team.roster) count[p.pos] = (count[p.pos]||0) + 1;
-  // 找最少的
+  for(const p of (team.roster||[])) count[p.pos] = (count[p.pos]||0) + 1;
   let best="PG", min=Infinity;
   for(const k of Object.keys(count)){
     if(count[k] < min){ min=count[k]; best=k; }
@@ -731,7 +1001,79 @@ function mostNeededPos(team){
   return best;
 }
 
-/* ===== Season / games ===== */
+function freeAgentScore(team, player){
+  let score = 0;
+  if(mostNeededPos(team) === player.pos) score += 40;
+  score += player.ovr;
+  score += (MAX_ROSTER - team.roster.length) * 2;
+  score += rand(0, 5);
+  return score;
+}
+
+// Season: AI signs a bit each day
+function aiSignFreeAgentsDaily(){
+  if(!state.league || !state.freeAgents || state.freeAgents.length===0) return;
+
+  // teams with smaller rosters first
+  const teams = [...state.league].sort((a,b)=>(a.roster.length-b.roster.length));
+  for(const team of teams){
+    if(state.freeAgents.length===0) break;
+    if(rosterFull(team)) continue;
+    if(Math.random() > INSEASON_AI_SIGN_CHANCE) continue;
+
+    const need = mostNeededPos(team);
+    let candidates = [...state.freeAgents].sort((x,y)=> (y.ovr-x.ovr) - (x.age-y.age));
+    let pick = candidates.find(p=>p.pos===need) || candidates[0];
+    if(!pick) continue;
+
+    const res = signFreeAgent(team.id, pick.id);
+    if(res.ok && res.player.ovr >= 83){
+      log(`AI 簽下：${team.name} 簽下 ${res.player.name}（${res.player.pos} ${res.player.ovr}）`, "muted");
+    }
+  }
+}
+
+// Offseason: autopick FA in reverse standings order (snake rounds)
+function offseasonAutoFillAllTeams(target = OFFSEASON_AUTOFILL_TARGET){
+  if(!state.league || !state.freeAgents) return;
+  const order = standingsSorted().slice().reverse().map(t=>t.id); // worst -> best
+
+  let loops = 0;
+  while(loops < 25){ // safety
+    loops++;
+    let any = false;
+
+    for(const teamId of order){
+      const team = state.league[teamId];
+      if(rosterFull(team)) continue;
+      if(team.roster.length >= target) continue;
+      if(state.freeAgents.length===0) break;
+
+      // pick best by score
+      let best = null, bestScore = -Infinity;
+      for(const p of state.freeAgents){
+        const s = freeAgentScore(team, p);
+        if(s > bestScore){ bestScore = s; best = p; }
+      }
+      if(!best) continue;
+
+      const res = signFreeAgent(teamId, best.id);
+      if(res.ok){
+        any = true;
+      }
+    }
+
+    if(!any) break;
+    // stop if all teams reached target or FA empty
+    if(state.freeAgents.length===0) break;
+    const leftToFill = state.league.some(t=>t.roster.length < target && !rosterFull(t));
+    if(!leftToFill) break;
+  }
+}
+
+/* =========================================================
+   Season simulation
+   ========================================================= */
 function teamOVR(team){
   const roster = team.roster || [];
   if(roster.length===0) return 60;
@@ -793,46 +1135,47 @@ function standingsSorted(){
   });
 }
 
-/* ===== Draft (rookies always non-core) ===== */
-function genRookiePool(seasonNum, count=30){
-  // 簡化：每季產生 30 名新秀（每隊一位）
-  const firstNames = ["Jay","Dee","Kai","Noah","Liam","Evan","Jalen","Ty","Aiden","Mason","Zion","Cole","Drew","Max","Jordan","Cam","Troy","Kobe","Leo","Miles"];
-  const lastNames  = ["Carter","Johnson","Williams","Brown","Davis","Miller","Taylor","Moore","Jackson","Martin","Lee","Walker","Harris","Young","Allen","Scott","Green","Baker","Hill","Reed"];
-  const positions = ["PG","SG","SF","PF","C"];
+/* =========================================================
+   Draft: Rookie pool released over seasons (30 per season)
+   ========================================================= */
+function genRookieBatch(count=30){
+  const used = allUsedNamesSet();
+  const out = [];
+  let tries = 0;
 
-  // 讓 rookie id 不會撞到 NBA_PLAYER_POOL：用大數字
-  const baseId = 100000 + seasonNum*1000;
+  while(out.length < count && tries < 2000){
+    tries++;
+    if(state.rookieCursor >= state.rookiePool.length) break;
 
-  const rookies = [];
-  for(let i=0;i<count;i++){
-    const fn = firstNames[rand(0,firstNames.length-1)];
-    const ln = lastNames[rand(0,lastNames.length-1)];
-    const pos = positions[rand(0,positions.length-1)];
-    const ovr = rand(72, 80); // 新秀初始能力（之後可做潛力）
-    const age = rand(19, 22);
-    rookies.push({
-      id: baseId + i,
-      name: `${fn} ${ln}`,
-      pos,
-      ovr,
-      age,
+    const src = state.rookiePool[state.rookieCursor];
+    state.rookieCursor++;
+
+    if(!src) break;
+    if(used.has(src.name)) continue; // avoid duplicates with active/league/FA
+    used.add(src.name);
+
+    out.push({
+      id: 200000 + state.rookieCursor,
+      name: src.name,
+      pos: src.pos,
+      ovr: rand(72, 80),
+      age: rand(19, 22),
       isCore:false,
-      team:null,
-      rookie:true
+      rookie:true,
+      team:null
     });
   }
-  // 強一點的放前面，方便選秀
-  rookies.sort((a,b)=>b.ovr-a.ovr);
-  return rookies;
+  return out;
 }
 
 function beginOffseasonIfNeeded(){
   if(state.offseason?.active) return;
 
-  state.offseason = state.offseason || {active:false,draftDone:false,rookies:[]};
+  state.offseason = state.offseason || {active:false,draftDone:false,faDone:false,rookies:[]};
   state.offseason.active = true;
   state.offseason.draftDone = false;
-  state.offseason.rookies = genRookiePool(state.season, 30);
+  state.offseason.faDone = false;
+  state.offseason.rookies = genRookieBatch(30);
 
   saveState();
 
@@ -842,14 +1185,14 @@ function beginOffseasonIfNeeded(){
       <div class="tiny muted">例行賽結束，進入休賽季流程：</div>
       <ul class="tiny muted" style="margin:8px 0 0 18px;line-height:1.6">
         <li>選秀（每隊一位新秀，依排名倒序）</li>
-        <li>你可以去自由市場補人</li>
+        <li>補強（你可選手動/自動；AI 會自動）</li>
         <li>準備好後按「新賽季」</li>
       </ul>
-      <div class="tiny warnTxt" style="margin-top:10px">建議先選秀再開新賽季。</div>
+      <div class="tiny warnTxt" style="margin-top:10px">建議：先選秀，再補強。</div>
     `,
     actions:[
-      {label:"先去自由市場", className:"ghost", onClick: ()=>{ closeModal(); state.phase="FA"; saveState(); renderAll(); }},
-      {label:"開始選秀", className:"primary", onClick: ()=>{ closeModal(); runDraft(); }}
+      {label:"開始選秀", className:"primary", onClick: ()=>{ closeModal(); runDraft(); }},
+      {label:"先去自由市場", className:"ghost", onClick: ()=>{ closeModal(); state.phase="FA"; saveState(); renderAll(); }}
     ]
   });
 }
@@ -863,25 +1206,17 @@ function runDraft(){
     });
     return;
   }
-  const order = standingsSorted().slice().reverse().map(t=>t.id); // 倒序：戰績差先選
-  const myId = state.userTeamId;
 
+  const order = standingsSorted().slice().reverse().map(t=>t.id); // worst first
+  const myId = state.userTeamId;
   const rookies = state.offseason.rookies;
 
   const pickLoop = (idx)=>{
     if(idx>=order.length){
       state.offseason.draftDone = true;
       saveState();
-      log(`選秀完成：所有球隊各選 1 位新秀。`, "warnTxt");
-      openModal({
-        title:"選秀完成",
-        bodyHtml:`<div class="tiny muted">休賽季：選秀已完成。</div>
-                  <div class="tiny muted" style="margin-top:8px">你可以去自由市場補人，準備好後按「新賽季」。</div>`,
-        actions:[
-          {label:"去自由市場", className:"ghost", onClick: ()=>{ closeModal(); state.phase="FA"; saveState(); renderAll(); }},
-          {label:"OK", className:"primary", onClick: closeModal}
-        ]
-      });
+      log(`選秀完成：每隊各選 1 位新秀（本季釋出 ${state.offseason.rookies.length + 30 - rookies.length} 人批次）。`, "warnTxt");
+      openOffseasonFAChoice();
       return;
     }
 
@@ -889,13 +1224,18 @@ function runDraft(){
     const team = state.league[teamId];
 
     if(rosterFull(team)){
-      // 名單已滿，跳過
       pickLoop(idx+1);
+      return;
+    }
+    if(rookies.length===0){
+      // no rookies left (shouldn't happen usually), end draft
+      state.offseason.draftDone = true;
+      saveState();
+      openOffseasonFAChoice();
       return;
     }
 
     if(teamId === myId){
-      // 玩家回合：給你選 Top 5
       const options = rookies.slice(0,5);
       const rows = options.map(r=>`
         <div class="row space" style="padding:8px;border-bottom:1px solid rgba(255,255,255,.06)">
@@ -919,7 +1259,6 @@ function runDraft(){
         ]
       });
 
-      // bind buttons
       setTimeout(()=>{
         const box = document.getElementById("draftOptions");
         if(!box) return;
@@ -939,7 +1278,6 @@ function runDraft(){
       },0);
 
     }else{
-      // AI 回合：拿最強且能補位置
       const needPos = mostNeededPos(team);
       let pickIndex = rookies.findIndex(r=>r.pos===needPos);
       if(pickIndex<0) pickIndex = 0;
@@ -954,25 +1292,40 @@ function runDraft(){
   pickLoop(0);
 }
 
-/* ===== Logging ===== */
-function log(msg, cls=""){
-  state.log.unshift({ t: Date.now(), msg, cls });
-  if(state.log.length>200) state.log.length = 200;
-}
-function renderLog(){
-  const box = el("log");
-  box.innerHTML = state.log.slice(0,90).map(x=>{
-    const time = new Date(x.t).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"});
-    return `<p class="${x.cls}"><span class="muted">[${time}]</span> ${escapeHtml(x.msg)}</p>`;
-  }).join("") || `<p class="muted">（還沒有事件）</p>`;
+function openOffseasonFAChoice(){
+  openModal({
+    title:"休賽季補強（折衷：你可選擇）",
+    bodyHtml: `
+      <div class="tiny muted">選秀完成後，你要怎麼處理自由市場補強？</div>
+      <div class="tiny muted" style="margin-top:8px;line-height:1.6">
+        <b>手動補強：</b>你自己去自由市場簽人（最有GM感）。<br/>
+        <b>自動補強：</b>系統依上季戰績倒序，輪流幫全聯盟補到 <b>${OFFSEASON_AUTOFILL_TARGET}</b> 人（你隊也一樣公平）。
+      </div>
+      <div class="tiny warnTxt" style="margin-top:10px">你也可以先手動簽幾個，再選自動把剩下的補齊。</div>
+    `,
+    actions:[
+      {label:"手動補強（去自由市場）", className:"primary", onClick: ()=>{ closeModal(); state.phase="FA"; saveState(); renderAll(); }},
+      {label:"自動補強（全聯盟）", className:"warn", onClick: ()=>{
+        closeModal();
+        offseasonAutoFillAllTeams(OFFSEASON_AUTOFILL_TARGET);
+        state.offseason.faDone = true;
+        saveState();
+        log(`休賽季自動補強完成：全聯盟補到目標人數（戰績倒序輪流）。`, "goodTxt");
+        renderAll();
+      }},
+      {label:"稍後再說", className:"ghost", onClick: closeModal}
+    ]
+  });
 }
 
-/* ===== Sim day ===== */
+/* =========================================================
+   Sim day / new season
+   ========================================================= */
 function simulateOneDay(){
   if(!state.league) return;
 
   if(state.offseason?.active){
-    log("目前是休賽季，請先完成選秀/補人，然後按「新賽季」。", "warnTxt");
+    log("目前是休賽季：請先完成選秀/補強，然後按「新賽季」。", "warnTxt");
     return;
   }
 
@@ -1001,7 +1354,6 @@ function simulateOneDay(){
     }
   }
 
-  // AI 補人（非基石）— 每天一點點，聯盟會慢慢變厚
   aiSignFreeAgentsDaily();
 
   state.dayIndex++;
@@ -1015,7 +1367,7 @@ function simulateOneDay(){
       bodyHtml:`<div class="tiny muted">賽季 S${state.season} 例行賽結束。</div>
                <div style="height:10px"></div>
                <div class="body tiny" style="line-height:1.6">${top8}</div>
-               <div class="tiny warnTxt" style="margin-top:10px">接著進入休賽季：選秀 → 新賽季。</div>`,
+               <div class="tiny warnTxt" style="margin-top:10px">接著進入休賽季：選秀 → 補強（手動/自動）。</div>`,
       actions:[{label:"OK", className:"primary", onClick: ()=>{ closeModal(); beginOffseasonIfNeeded(); }}]
     });
   }
@@ -1023,16 +1375,15 @@ function simulateOneDay(){
   saveState();
 }
 
-/* ===== Start new season ===== */
 function startNewSeason(){
   if(!state.league) return;
 
-  // 建議：休賽季如果未選秀，先提醒
+  // if offseason active, give reminder: draft should be done ideally
   if(state.offseason?.active && !state.offseason.draftDone){
     openModal({
-      title:"建議先選秀",
-      bodyHtml:`<div class="tiny warnTxt"><b>你還沒完成選秀</b>（每隊一位新秀）。</div>
-               <div class="tiny muted" style="margin-top:8px">要直接跳過也可以，但少一個補強機會。</div>`,
+      title:"建議先完成選秀",
+      bodyHtml:`<div class="tiny warnTxt"><b>你還沒完成選秀。</b></div>
+               <div class="tiny muted" style="margin-top:8px">要直接開季也可以，但你會少一個補強機會。</div>`,
       actions:[
         {label:"現在選秀", className:"primary", onClick: ()=>{ closeModal(); runDraft(); }},
         {label:"先不選，直接開季", className:"warn", onClick: ()=>{ closeModal(); reallyStartNewSeason(); }}
@@ -1040,37 +1391,63 @@ function startNewSeason(){
     });
     return;
   }
+
+  // if offseason active and fa choice not done, offer
+  if(state.offseason?.active && state.offseason.draftDone && !state.offseason.faDone){
+    openModal({
+      title:"休賽季補強還沒處理",
+      bodyHtml:`<div class="tiny muted">你要先進行休賽季補強嗎？</div>
+                <div class="tiny muted" style="margin-top:8px">你可以：手動補強 或 自動補強，再開季。</div>`,
+      actions:[
+        {label:"補強選擇", className:"primary", onClick: ()=>{ closeModal(); openOffseasonFAChoice(); }},
+        {label:"直接開季", className:"warn", onClick: ()=>{ closeModal(); reallyStartNewSeason(); }}
+      ]
+    });
+    return;
+  }
+
   reallyStartNewSeason();
 }
+
 function reallyStartNewSeason(){
   state.season += 1;
   state.dayIndex = 0;
   for(const t of state.league){ t.w=0; t.l=0; }
   state.scheduleDays = generateSeasonSchedule(state.league.map(t=>t.id), state.gamesPerTeam);
 
-  // 清除休賽季狀態
-  state.offseason = { active:false, draftDone:false, rookies:[] };
+  state.offseason = { active:false, draftDone:false, faDone:false, rookies:[] };
 
   log(`新賽季 S${state.season} 開始（每隊 ${state.gamesPerTeam} 場）。`, "warnTxt");
   saveState();
 }
 
-/* ====== UI ====== */
+/* =========================================================
+   Logging
+   ========================================================= */
+function log(msg, cls=""){
+  state.log.unshift({ t: Date.now(), msg, cls });
+  if(state.log.length>220) state.log.length = 220;
+}
+function renderLog(){
+  const box = el("log");
+  box.innerHTML = state.log.slice(0,90).map(x=>{
+    const time = new Date(x.t).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"});
+    return `<p class="${x.cls}"><span class="muted">[${time}]</span> ${escapeHtml(x.msg)}</p>`;
+  }).join("") || `<p class="muted">（還沒有事件）</p>`;
+}
+
+/* =========================================================
+   UI + Flow
+   ========================================================= */
 function setPhaseUI(){
   const phase = state.phase;
   const hdrStatus = el("hdrStatus");
 
-  const screenTeam = el("screenTeam");
-  const screenCore = el("screenCore");
-  const screenHub  = el("screenHub");
-  const screenTrade= el("screenTrade");
-  const screenFA   = el("screenFA");
-
-  screenTeam.style.display  = (phase==="TEAM") ? "" : "none";
-  screenCore.style.display  = (phase==="CORE") ? "" : "none";
-  screenHub.style.display   = (phase==="HUB")  ? "" : "none";
-  screenTrade.style.display = (phase==="TRADE")? "" : "none";
-  screenFA.style.display    = (phase==="FA")   ? "" : "none";
+  el("screenTeam").style.display  = (phase==="TEAM") ? "" : "none";
+  el("screenCore").style.display  = (phase==="CORE") ? "" : "none";
+  el("screenHub").style.display   = (phase==="HUB")  ? "" : "none";
+  el("screenTrade").style.display = (phase==="TRADE")? "" : "none";
+  el("screenFA").style.display    = (phase==="FA")   ? "" : "none";
 
   let title="選隊", pill="Step 1/6";
   if(phase==="CORE"){ title="選基石"; pill="Step 2/6"; }
@@ -1083,16 +1460,16 @@ function setPhaseUI(){
 
   hdrStatus.textContent = (state.teamLocked && state.userTeam) ? `已選隊：${state.userTeam}` : "未選隊";
 
-  // KPIs
-  el("kpiSeason").textContent = state.league ? `S${state.season}` : "-";
-  el("kpiDay").textContent = state.league ? (state.offseason?.active ? `休賽季` : `Day ${Math.min(state.dayIndex+1, state.gamesPerTeam)}/${state.gamesPerTeam}`) : "-";
-
   const myTeam = (state.league && state.userTeamId!=null) ? state.league[state.userTeamId] : null;
+  el("kpiSeason").textContent = state.league ? `S${state.season}` : "-";
+  el("kpiDay").textContent = state.league
+    ? (state.offseason?.active ? `休賽季` : `Day ${Math.min(state.dayIndex+1, state.gamesPerTeam)}/${state.gamesPerTeam}`)
+    : "-";
   el("kpiW").textContent = myTeam ? myTeam.w : 0;
   el("kpiL").textContent = myTeam ? myTeam.l : 0;
 
   el("seasonHint").textContent = state.league
-    ? (state.offseason?.active ? `休賽季：選秀/補人` : `每隊 ${state.gamesPerTeam} 場`)
+    ? (state.offseason?.active ? `休賽季：選秀/補強` : `每隊 ${state.gamesPerTeam} 場`)
     : "尚未建立聯盟";
 }
 
@@ -1119,12 +1496,14 @@ function renderTeamScreen(){
     grid.appendChild(btn);
   });
 }
+
 function chooseTeam(teamName){
   state.userTeam = teamName;
   state.teamLocked = true;
   state.phase = "CORE";
-  state.corePool = buildCorePool();
   state.chosenCoreIds = [];
+  // corePool already built in syncState(), but keep fresh
+  state.corePool = buildCorePoolFromActive(state.activePool);
   saveState();
   renderAll();
 }
@@ -1161,6 +1540,7 @@ function renderCoreScreen(){
     finalizeCoreAndLeague();
   };
 }
+
 function toggleCorePick(playerId){
   const idx = state.chosenCoreIds.indexOf(playerId);
   if(idx >= 0){
@@ -1192,21 +1572,22 @@ function finalizeCoreAndLeague(){
   const usedIds = new Set(myCores.map(p=>p.id));
   state.league[state.userTeamId].roster = myCores;
 
-  const pool = [...NBA_PLAYER_POOL].sort((a,b)=>b.ovr-a.ovr);
+  // AI cores from the SAME core pool, unique IDs
   for(const team of state.league){
     if(team.id === state.userTeamId) continue;
-    const aiCores = aiPickCoresFromPool(pool, usedIds, 2, 3).map(p=>({...p, isCore:true, team: team.name}));
+    const aiCores = aiPickCoresFromCorePool(state.corePool, usedIds, 2, 3)
+      .map(p=>({...p, isCore:true, team: team.name}));
     team.roster = aiCores;
   }
 
   state.dayIndex = 0;
   state.scheduleDays = generateSeasonSchedule(state.league.map(t=>t.id), state.gamesPerTeam);
 
-  // 初始化自由市場（保證是非基石）
-  state.freeAgents = buildFreeAgentPool();
+  // build FA from active pool excluding rostered players
+  state.freeAgents = buildFreeAgentPoolFromActive();
 
-  // 休賽季關掉
-  state.offseason = { active:false, draftDone:false, rookies:[] };
+  // reset offseason
+  state.offseason = { active:false, draftDone:false, faDone:false, rookies:[] };
 
   log(`你已完成建隊：${state.userTeam}（基石 ${myCores.length} 位）。`, "goodTxt");
   log(`賽季 S${state.season} 開始（每隊 ${state.gamesPerTeam} 場）。`, "warnTxt");
@@ -1468,19 +1849,17 @@ function renderFAScreen(){
     let list = [...state.freeAgents];
 
     const q = (searchBox.value||"").trim().toLowerCase();
-    if(q){
-      list = list.filter(p=>p.name.toLowerCase().includes(q));
-    }
+    if(q) list = list.filter(p=>p.name.toLowerCase().includes(q));
+
     const pos = posFilter.value;
-    if(pos){
-      list = list.filter(p=>p.pos===pos);
-    }
+    if(pos) list = list.filter(p=>p.pos===pos);
+
     const sort = sortSel.value;
     if(sort==="ovr") list.sort((a,b)=>b.ovr-a.ovr);
     if(sort==="age") list.sort((a,b)=>a.age-b.age);
     if(sort==="name") list.sort((a,b)=>a.name.localeCompare(b.name));
 
-    const show = list.slice(0,40);
+    const show = list.slice(0,60);
     const box = el("faList");
     box.innerHTML = show.map(p=>`
       <div class="item">
@@ -1494,7 +1873,6 @@ function renderFAScreen(){
       </div>
     `).join("") || `<div class="item muted">（沒有符合條件的自由球員）</div>`;
 
-    // bind
     box.querySelectorAll("button[data-faid]").forEach(btn=>{
       btn.addEventListener("click", ()=>{
         const pid = Number(btn.getAttribute("data-faid"));
@@ -1516,7 +1894,6 @@ function renderFAScreen(){
       });
     });
 
-    // my roster mini
     const myBox = el("faMyRoster");
     const roster = [...myTeam.roster].sort((a,b)=>(b.isCore-a.isCore)||(b.ovr-a.ovr));
     myBox.innerHTML = roster.map(p=>`
@@ -1571,14 +1948,16 @@ function showPlayerDetail(p){
       <div style="height:10px"></div>
       <div class="tiny muted">
         非基石進隊方式：自由市場簽下 / 選秀加入 / 交易拿到。<br/>
-        （下一步要做「薪資/合約/潛力」也很好接。）
+        休賽季可選：手動補強 or 自動補強（戰績倒序輪流）。
       </div>
     `,
     actions:[{label:"關閉", className:"primary", onClick: closeModal}]
   });
 }
 
-/* ===== Controls: Sim / new season / log ===== */
+/* =========================================================
+   Controls: sim / new season / log
+   ========================================================= */
 el("btnSim1").addEventListener("click", ()=>{
   if(!state.league){ log("請先完成選隊與選基石。", "warnTxt"); renderAll(); return; }
   simulateOneDay();
@@ -1612,7 +1991,6 @@ el("btnNewSeason").addEventListener("click", ()=>{
     ]
   });
 });
-
 el("btnClearLog").addEventListener("click", ()=>{
   state.log = [];
   saveState();
@@ -1695,8 +2073,7 @@ el("btnImport").addEventListener("click", ()=>{
           if(!parsed || typeof parsed !== "object") throw new Error("bad json");
           if(!parsed.phase) throw new Error("missing phase");
           state = parsed;
-          syncLegacyStateIfNeeded();
-          saveState();
+          syncState();
           closeModal();
           renderAll();
         }catch{
@@ -1712,7 +2089,9 @@ el("btnImport").addEventListener("click", ()=>{
   });
 });
 
-/* ===== Main render ===== */
+/* =========================================================
+   Render all
+   ========================================================= */
 function renderAll(){
   setPhaseUI();
   renderLog();
@@ -1730,12 +2109,14 @@ function renderAll(){
   }
 
   const ready = !!state.league;
-
   el("btnSim1").disabled = !ready;
   el("btnSim7").disabled = !ready;
   el("btnSimAll").disabled = !ready;
   el("btnNewSeason").disabled = !ready;
 }
+
+// Start
+renderAll();
 </script>
 </body>
 </html>
