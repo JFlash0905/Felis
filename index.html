@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>NBA GM Simulator v0.9</title>
+<title>NBA GM Core v1.0</title>
 <style>
 body { font-family: Arial, sans-serif; background:#f2f2f2; }
 #app { max-width: 900px; margin:auto; padding:20px; }
@@ -19,13 +19,23 @@ const ACTIVE_TEAMS = ["Golden State Warriors","Los Angeles Lakers","Cleveland Ca
 const NBA_PLAYER_POOL = [
 {name:"Stephen Curry",pos:"PG",ovr:88},{name:"LeBron James",pos:"SF",ovr:90},{name:"Kevin Durant",pos:"PF",ovr:89},{name:"Giannis Antetokounmpo",pos:"PF",ovr:91},
 {name:"Luka Dončić",pos:"PG",ovr:89},{name:"Joel Embiid",pos:"C",ovr:90},{name:"Nikola Jokić",pos:"C",ovr:92},{name:"Jayson Tatum",pos:"SF",ovr:87},
-{name:"Ja Morant",pos:"PG",ovr:85},{name:"Devin Booker",pos:"SG",ovr:84},{name:"Donovan Mitchell",pos:"SG",ovr:85},{name:"Trae Young",pos:"PG",ovr:84},
-{name:"Shai Gilgeous‑Alexander",pos:"PG",ovr:88},{name:"Anthony Davis",pos:"PF",ovr:88},{name:"Kawhi Leonard",pos:"SF",ovr:89},{name:"Jimmy Butler",pos:"SF",ovr:87},
-{name:"Chris Paul",pos:"PG",ovr:81},{name:"Damian Lillard",pos:"PG",ovr:88},{name:"Bradley Beal",pos:"SG",ovr:83},{name:"Zion Williamson",pos:"PF",ovr:86}
+{name:"Ja Morant",pos:"PG",ovr:85},{name:"Devin Booker",pos:"SG",ovr:84},{name:"Donovan Mitchell",pos:"SG",ovr:85},{name:"Trae Young",pos:"PG",ovr:84}
 ];
+
 // ===== 狀態 =====
 let futureNBAPlayers=[...NBA_PLAYER_POOL];
-let gameState={season:1,team:null,roster:[],aiTeams:{},freeAgents:[],drafted:0,gamesPlayed:0,totalGames:20,wins:0,losses:0};
+let gameState={
+ season:1,
+ team:null,
+ roster:[],
+ aiTeams:{},
+ freeAgents:[],
+ drafted:0,
+ gamesPlayed:0,
+ totalGames:20,
+ wins:0,
+ losses:0
+};
 const MAX_SIGN=2;
 const MIN_ROSTER_SIZE=8;
 
@@ -36,13 +46,16 @@ function teamPower(roster){return roster.reduce((s,p)=>s+p.ovr,0)/Math.max(roste
 // ===== 初始化 =====
 function startSeason(){
  gameState.aiTeams={};
- ACTIVE_TEAMS.forEach(t=>{if(t!==gameState.team) gameState.aiTeams[t]={roster:[]};});
+ ACTIVE_TEAMS.forEach(t=>{
+   if(t!==gameState.team) gameState.aiTeams[t]={roster:[]};
+ });
+ // 自由球員池
  gameState.freeAgents=[];
  let count=Math.min(6,futureNBAPlayers.length);
  for(let i=0;i<count;i++){
   let p=createPlayer(futureNBAPlayers.shift(),18);
-  gameState.freeAgents.push(p);
   p.assigned=true;
+  gameState.freeAgents.push(p);
  }
  gameState.drafted=0;
 }
@@ -92,7 +105,6 @@ function simulateSeason(){
   Math.random()<myP/(myP+league)?gameState.wins++:gameState.losses++;
   gameState.gamesPlayed++;
  }
- render();
  alert(`例行賽結束：${gameState.wins}勝 ${gameState.losses}敗`);
  nextSeason();
 }
