@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>NBA GM Game — Complete (Core90 + FA90 + Rookie200)</title>
+  <title>NBA GM Game — Full (Manual FA + Multi-Trade + Cap + Training)</title>
   <style>
     :root{
       --bg:#0b0f14;--card:#111827;--panel:#0b1220;--stroke:#243044;
@@ -66,7 +66,7 @@
     .linkBtn:hover{text-decoration:underline}
     .cols2{display:grid;grid-template-columns:1fr;gap:10px}
     @media(min-width:940px){.cols2{grid-template-columns:1fr 1fr}}
-    .miniList{max-height:300px;overflow:auto;background:var(--panel);border:1px solid var(--stroke);border-radius:12px;padding:8px}
+    .miniList{max-height:320px;overflow:auto;background:var(--panel);border:1px solid var(--stroke);border-radius:12px;padding:8px}
     .miniList .item{padding:8px;border-bottom:1px solid rgba(255,255,255,.06)}
     .miniList .item:last-child{border-bottom:none}
     .log{max-height:220px;overflow:auto;background:var(--panel);border:1px solid var(--stroke);border-radius:12px;padding:10px}
@@ -76,20 +76,32 @@
       display:none;align-items:center;justify-content:center;padding:16px;z-index:50;
     }
     .modal{
-      width:min(760px,100%);background:rgba(17,24,39,.97);
+      width:min(820px,100%);background:rgba(17,24,39,.97);
       border:1px solid #263244;border-radius:14px;padding:14px;
     }
     .modal h2{margin:0 0 8px 0;font-size:18px}
     .modal .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
     .modal .body{background:var(--panel);border:1px solid var(--stroke);border-radius:12px;padding:12px}
     .modal input{width:100%}
+    .banner{
+      padding:10px;border-radius:12px;border:1px solid rgba(245,158,11,.35);
+      background:rgba(245,158,11,.08);
+    }
+    .checkRow{
+      display:flex;gap:10px;align-items:flex-start;justify-content:space-between;
+      padding:8px;border-bottom:1px solid rgba(255,255,255,.06)
+    }
+    .checkRow:last-child{border-bottom:none}
+    .checkRow label{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+    .checkRow input{margin-top:3px}
+    .nowrap{white-space:nowrap}
   </style>
 </head>
 <body>
 <header>
   <div>
-    <h1>NBA GM Game — Complete</h1>
-    <div class="muted">基石候選90｜自由市場90｜新秀池200（每季吐30）｜休賽季：手動/自動補強｜交易｜賽季｜自動存檔</div>
+    <h1>NBA GM Game — Full</h1>
+    <div class="muted">純手動自由市場｜休賽季輪流簽｜多換一交易｜薪資上限｜訓練（TP/疲勞/POT）｜自動存檔</div>
   </div>
   <div class="row">
     <span class="pill" id="hdrStatus">未選隊</span>
@@ -106,7 +118,7 @@
           <div class="tiny muted">目前階段</div>
           <div class="row">
             <b id="phaseTitle">選隊</b>
-            <span class="pill" id="phasePill">Step 1/6</span>
+            <span class="pill" id="phasePill">Step 1/7</span>
           </div>
         </div>
         <div class="row">
@@ -129,6 +141,14 @@
           <div class="tiny muted">你的戰績</div>
           <b><span id="kpiW">0</span>-<span id="kpiL">0</span></b>
         </div>
+        <div class="box">
+          <div class="tiny muted">薪資 / Cap</div>
+          <b id="kpiSalary">-</b>
+        </div>
+        <div class="box">
+          <div class="tiny muted">訓練 TP</div>
+          <b id="kpiTP">-</b>
+        </div>
       </div>
 
       <div style="height:10px"></div>
@@ -147,7 +167,7 @@
         </div>
         <div class="tiny muted" style="margin-top:8px">
           1 天 = 全聯盟 15 場。<br/>
-          <span class="warnTxt">季末會進入休賽季：選秀 → 補強（手動/自動）→ 新賽季。</span>
+          <span class="warnTxt">季末：選秀（30 人釋出）→ 休賽季自由市場（輪流簽）→ 開季。</span>
         </div>
       </div>
 
@@ -212,16 +232,19 @@
         <div class="row space">
           <div>
             <p class="bigTitle">主介面</p>
-            <div class="muted tiny">名單｜交易｜自由市場補人｜推賽季｜看排名。</div>
+            <div class="muted tiny">名單｜訓練｜交易｜自由市場（手動）｜推賽季｜看排名。</div>
           </div>
           <div class="row">
             <span class="pill" id="hubTeamPill">-</span>
+            <button class="ghost" id="btnGoTrain">訓練</button>
             <button class="ghost" id="btnGoFA">自由市場</button>
             <button class="blue" id="btnGoTrade">交易中心</button>
           </div>
         </div>
 
-        <div class="cols2">
+        <div id="hubBanner" style="display:none;margin-top:10px"></div>
+
+        <div class="cols2" style="margin-top:10px">
           <div class="panel">
             <div class="row space">
               <b>你的球員名單</b>
@@ -254,8 +277,8 @@
       <div id="screenTrade" style="display:none">
         <div class="row space">
           <div>
-            <p class="bigTitle">交易中心（1 換 1）</p>
-            <div class="tiny muted">牽涉基石會更難：倍率更高。</div>
+            <p class="bigTitle">交易中心（多換一 / 一換多）</p>
+            <div class="tiny muted">用勾選清單選人；會檢查名單上限與薪資上限。</div>
           </div>
           <div class="row">
             <button class="ghost" id="btnBackHubFromTrade">← 回主介面</button>
@@ -274,36 +297,38 @@
             <button class="ghost" id="btnRefreshTrade">刷新清單</button>
           </div>
 
-          <div style="height:10px"></div>
+          <div style="height:12px"></div>
 
           <div class="cols2">
             <div class="panel" style="background:rgba(11,18,32,.8)">
-              <b>你送出</b>
-              <div class="tiny muted" style="margin-top:6px">選一位你隊球員</div>
+              <div class="row space">
+                <b>你送出（可多選）</b>
+                <span class="pill" id="giveSummary">-</span>
+              </div>
+              <div class="tiny muted" style="margin-top:6px">建議：用多個輪換湊到想換的球星。</div>
               <div style="height:8px"></div>
-              <select id="giveSelect" style="width:100%"></select>
-              <div class="tiny muted" style="margin-top:8px" id="giveValueInfo">價值：-</div>
-              <div style="height:8px"></div>
-              <div class="miniList" id="myRosterMini"></div>
+              <div class="miniList" id="giveList"></div>
             </div>
 
             <div class="panel" style="background:rgba(11,18,32,.8)">
-              <b>你得到</b>
-              <div class="tiny muted" style="margin-top:6px">選一位對手球員</div>
+              <div class="row space">
+                <b>你得到（可多選）</b>
+                <span class="pill" id="getSummary">-</span>
+              </div>
+              <div class="tiny muted" style="margin-top:6px">牽涉基石倍率更高。</div>
               <div style="height:8px"></div>
-              <select id="getSelect" style="width:100%"></select>
-              <div class="tiny muted" style="margin-top:8px" id="getValueInfo">價值：-</div>
-              <div style="height:8px"></div>
-              <div class="miniList" id="oppRosterMini"></div>
+              <div class="miniList" id="getList"></div>
             </div>
           </div>
 
           <div style="height:12px"></div>
 
           <div class="row space">
-            <div class="tiny muted" id="aiRuleInfo">AI 規則：你的報價價值 ≥ 對手球員價值 × 倍率</div>
+            <div class="tiny muted" id="tradeRuleInfo">-</div>
             <button class="primary" id="btnTrade">送出交易</button>
           </div>
+
+          <div class="tiny muted" style="margin-top:8px" id="tradeAfterInfo">-</div>
         </div>
       </div>
 
@@ -311,15 +336,17 @@
       <div id="screenFA" style="display:none">
         <div class="row space">
           <div>
-            <p class="bigTitle">自由市場（非基石補人）</p>
-            <div class="tiny muted">你手動簽人永遠成功；休賽季若選自動補強，會照戰績倒序輪流簽。</div>
+            <p class="bigTitle">自由市場（純手動）</p>
+            <div class="tiny muted">例行賽可隨時簽；休賽季會依戰績倒序輪流簽（你的回合才可簽）。</div>
           </div>
           <div class="row">
             <button class="ghost" id="btnBackHubFromFA">← 回主介面</button>
           </div>
         </div>
 
-        <div class="panel">
+        <div id="faBanner" style="display:none;margin-top:10px"></div>
+
+        <div class="panel" style="margin-top:10px">
           <div class="row space">
             <b>自由球員清單</b>
             <span class="pill" id="faHintPill">-</span>
@@ -348,21 +375,21 @@
           <div class="cols2">
             <div class="panel" style="background:rgba(11,18,32,.8)">
               <b>可簽球員（Top 60 顯示）</b>
-              <div class="tiny muted" style="margin-top:6px">點名字看詳情；按「簽下」進隊。</div>
+              <div class="tiny muted" style="margin-top:6px">點名字看詳情；按「簽下」會檢查薪資上限。</div>
               <div style="height:8px"></div>
               <div class="miniList" id="faList"></div>
             </div>
 
             <div class="panel" style="background:rgba(11,18,32,.8)">
               <b>你的名單</b>
-              <div class="tiny muted" style="margin-top:6px">名單滿了就不能簽（可用交易調整）。</div>
+              <div class="tiny muted" style="margin-top:6px">名單滿或超 cap 就不能簽（可用交易/釋出調整）。</div>
               <div style="height:8px"></div>
               <div class="miniList" id="faMyRoster"></div>
             </div>
           </div>
 
           <div class="tiny muted" style="margin-top:10px">
-            <b>選秀：</b>季末會從新秀池吐出 30 人（每隊 1 位），依排名倒序選。
+            <b>選秀：</b>季末會從新秀池釋出 30 人（每隊 1 位），依排名倒序選。
           </div>
         </div>
       </div>
@@ -382,19 +409,19 @@
 
 <script>
 /* =========================
-   NBA GM — COMPLETE
+   NBA GM — FULL VERSION
    ========================= */
 
-const LS_KEY = "nba_gm_complete_save_v1";
+const LS_KEY = "nba_gm_full_manualfa_multitrade_cap_training_v1";
 
 const MAX_ROSTER = 12;
 const DEFAULT_GAMES_PER_TEAM = 20;
 
-// 休賽季自動補強：補到這個人數（不一定補滿MAX_ROSTER，避免太暴力）
-const OFFSEASON_AUTOFILL_TARGET = 10;
+// Salary Cap (Hard Cap)
+const CAP = 120;
 
-// 季中 AI 簽 FA 的強度（越高越常簽）
-const INSEASON_AI_SIGN_CHANCE = 0.45; // 0~1
+// Offseason FA rounds (turn-based)
+const OFFSEASON_FA_ROUNDS = 4;
 
 const TEAMS = [
   "Atlanta Hawks","Boston Celtics","Brooklyn Nets","Charlotte Hornets","Chicago Bulls",
@@ -412,208 +439,85 @@ const el = id => document.getElementById(id);
 function escapeHtml(s){
   return (s??"").toString()
     .replaceAll("&","&amp;").replaceAll("<","&lt;")
-    .replaceAll(">","&gt;").replaceAll('"',"&quot;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
     .replaceAll("'","&#039;");
 }
 
-/* =========================================================
-   DATA: Core 90 + FA 90 => Single ACTIVE pool (180)
-   Rookie pool: 200 (released gradually)
-   ========================================================= */
+/* =========================
+   Data: Core 90 + FA 90 -> single ACTIVE pool
+   Rookie 200 -> released 30 per season
+   ========================= */
 
-// ✅ 基石候選 90（真實 NBA 名字）
-const CORE_90 = [
-  {name:"Nikola Jokic",pos:"C"},
-  {name:"Giannis Antetokounmpo",pos:"PF"},
-  {name:"Luka Doncic",pos:"PG"},
-  {name:"Shai Gilgeous-Alexander",pos:"PG"},
-  {name:"Joel Embiid",pos:"C"},
-  {name:"Jayson Tatum",pos:"SF"},
-  {name:"Stephen Curry",pos:"PG"},
-  {name:"LeBron James",pos:"SF"},
-  {name:"Kevin Durant",pos:"SF"},
-  {name:"Anthony Davis",pos:"PF"},
-  {name:"Devin Booker",pos:"SG"},
-  {name:"Kawhi Leonard",pos:"SF"},
-  {name:"Jimmy Butler",pos:"SF"},
-  {name:"Damian Lillard",pos:"PG"},
-  {name:"Ja Morant",pos:"PG"},
-  {name:"Anthony Edwards",pos:"SG"},
-  {name:"Donovan Mitchell",pos:"SG"},
-  {name:"Tyrese Haliburton",pos:"PG"},
-  {name:"Jalen Brunson",pos:"PG"},
-  {name:"Jaylen Brown",pos:"SG"},
-  {name:"Kyrie Irving",pos:"PG"},
-  {name:"Karl-Anthony Towns",pos:"C"},
-  {name:"Bam Adebayo",pos:"C"},
-  {name:"Domantas Sabonis",pos:"C"},
-  {name:"Paul George",pos:"SF"},
-  {name:"De'Aaron Fox",pos:"PG"},
-  {name:"Jamal Murray",pos:"PG"},
-  {name:"Tyrese Maxey",pos:"SG"},
-  {name:"Zion Williamson",pos:"PF"},
-  {name:"Trae Young",pos:"PG"},
-  {name:"Victor Wembanyama",pos:"C"},
-  {name:"Paolo Banchero",pos:"PF"},
-  {name:"Scottie Barnes",pos:"SF"},
-  {name:"Cade Cunningham",pos:"PG"},
-  {name:"Evan Mobley",pos:"PF"},
-  {name:"Franz Wagner",pos:"SF"},
-  {name:"Alperen Sengun",pos:"C"},
-  {name:"Jaren Jackson Jr.",pos:"PF"},
-  {name:"Desmond Bane",pos:"SG"},
-  {name:"Mikal Bridges",pos:"SF"},
-  {name:"Brandon Ingram",pos:"SF"},
-  {name:"Lauri Markkanen",pos:"PF"},
-  {name:"Julius Randle",pos:"PF"},
-  {name:"Pascal Siakam",pos:"PF"},
-  {name:"Rudy Gobert",pos:"C"},
-  {name:"Kristaps Porzingis",pos:"C"},
-  {name:"Jrue Holiday",pos:"PG"},
-  {name:"James Harden",pos:"SG"},
-  {name:"DeMar DeRozan",pos:"SF"},
-  {name:"Deandre Ayton",pos:"C"},
-  {name:"Darius Garland",pos:"PG"},
-  {name:"Dejounte Murray",pos:"PG"},
-  {name:"LaMelo Ball",pos:"PG"},
-  {name:"Jarrett Allen",pos:"C"},
-  {name:"Zach LaVine",pos:"SG"},
-  {name:"Draymond Green",pos:"PF"},
-  {name:"Klay Thompson",pos:"SG"},
-  {name:"Chris Paul",pos:"PG"},
-  {name:"Bradley Beal",pos:"SG"},
-  {name:"Michael Porter Jr.",pos:"SF"},
-  {name:"Aaron Gordon",pos:"PF"},
-  {name:"CJ McCollum",pos:"SG"},
-  {name:"Jalen Williams",pos:"SF"},
-  {name:"Chet Holmgren",pos:"C"},
-  {name:"De'Aaron Fox",pos:"PG"}, // (duplicate on purpose -> will be deduped)
-  {name:"Tyrese Haliburton",pos:"PG"}, // (duplicate -> deduped)
-  {name:"Khris Middleton",pos:"SF"},
-  {name:"Tobias Harris",pos:"PF"},
-  {name:"Myles Turner",pos:"C"},
-  {name:"OG Anunoby",pos:"SF"},
-  {name:"Jalen Johnson",pos:"PF"},
-  {name:"Scottie Barnes",pos:"SF"}, // duplicate -> deduped
-  {name:"Devin Vassell",pos:"SG"},
-  {name:"Anfernee Simons",pos:"SG"},
-  {name:"Jabari Smith Jr.",pos:"PF"},
-  {name:"Keegan Murray",pos:"PF"},
-  {name:"Brandon Miller",pos:"SF"},
-  {name:"Scoot Henderson",pos:"PG"},
-  {name:"Amen Thompson",pos:"SG"},
-  {name:"Ausar Thompson",pos:"SF"},
-  {name:"Jalen Duren",pos:"C"},
-  {name:"Shaedon Sharpe",pos:"SG"},
-  {name:"Jerami Grant",pos:"PF"},
-  {name:"Deandre Hunter",pos:"SF"},
-  {name:"Cameron Johnson",pos:"SF"},
-  {name:"Kyle Kuzma",pos:"PF"},
-  {name:"Fred VanVleet",pos:"PG"},
-  {name:"Austin Reaves",pos:"SG"},
-  {name:"Marcus Smart",pos:"PG"},
-  {name:"Derrick White",pos:"PG"}
+// Core candidates (real names)
+const CORE_90_RAW = [
+  {name:"Nikola Jokic",pos:"C"},{name:"Giannis Antetokounmpo",pos:"PF"},{name:"Luka Doncic",pos:"PG"},
+  {name:"Shai Gilgeous-Alexander",pos:"PG"},{name:"Joel Embiid",pos:"C"},{name:"Jayson Tatum",pos:"SF"},
+  {name:"Stephen Curry",pos:"PG"},{name:"LeBron James",pos:"SF"},{name:"Kevin Durant",pos:"SF"},
+  {name:"Anthony Davis",pos:"PF"},{name:"Devin Booker",pos:"SG"},{name:"Kawhi Leonard",pos:"SF"},
+  {name:"Jimmy Butler",pos:"SF"},{name:"Damian Lillard",pos:"PG"},{name:"Ja Morant",pos:"PG"},
+  {name:"Anthony Edwards",pos:"SG"},{name:"Donovan Mitchell",pos:"SG"},{name:"Tyrese Haliburton",pos:"PG"},
+  {name:"Jalen Brunson",pos:"PG"},{name:"Jaylen Brown",pos:"SG"},{name:"Kyrie Irving",pos:"PG"},
+  {name:"Karl-Anthony Towns",pos:"C"},{name:"Bam Adebayo",pos:"C"},{name:"Domantas Sabonis",pos:"C"},
+  {name:"Paul George",pos:"SF"},{name:"De'Aaron Fox",pos:"PG"},{name:"Jamal Murray",pos:"PG"},
+  {name:"Tyrese Maxey",pos:"SG"},{name:"Zion Williamson",pos:"PF"},{name:"Trae Young",pos:"PG"},
+  {name:"Victor Wembanyama",pos:"C"},{name:"Paolo Banchero",pos:"PF"},{name:"Scottie Barnes",pos:"SF"},
+  {name:"Cade Cunningham",pos:"PG"},{name:"Evan Mobley",pos:"PF"},{name:"Franz Wagner",pos:"SF"},
+  {name:"Alperen Sengun",pos:"C"},{name:"Jaren Jackson Jr.",pos:"PF"},{name:"Desmond Bane",pos:"SG"},
+  {name:"Mikal Bridges",pos:"SF"},{name:"Brandon Ingram",pos:"SF"},{name:"Lauri Markkanen",pos:"PF"},
+  {name:"Julius Randle",pos:"PF"},{name:"Pascal Siakam",pos:"PF"},{name:"Rudy Gobert",pos:"C"},
+  {name:"Kristaps Porzingis",pos:"C"},{name:"Jrue Holiday",pos:"PG"},{name:"James Harden",pos:"SG"},
+  {name:"DeMar DeRozan",pos:"SF"},{name:"Deandre Ayton",pos:"C"},{name:"Darius Garland",pos:"PG"},
+  {name:"Dejounte Murray",pos:"PG"},{name:"LaMelo Ball",pos:"PG"},{name:"Jarrett Allen",pos:"C"},
+  {name:"Zach LaVine",pos:"SG"},{name:"Draymond Green",pos:"PF"},{name:"Klay Thompson",pos:"SG"},
+  {name:"Chris Paul",pos:"PG"},{name:"Bradley Beal",pos:"SG"},{name:"Michael Porter Jr.",pos:"SF"},
+  {name:"Aaron Gordon",pos:"PF"},{name:"CJ McCollum",pos:"SG"},{name:"Jalen Williams",pos:"SF"},
+  {name:"Chet Holmgren",pos:"C"},{name:"Khris Middleton",pos:"SF"},{name:"Tobias Harris",pos:"PF"},
+  {name:"Myles Turner",pos:"C"},{name:"OG Anunoby",pos:"SF"},{name:"Devin Vassell",pos:"SG"},
+  {name:"Anfernee Simons",pos:"SG"},{name:"Jabari Smith Jr.",pos:"PF"},{name:"Keegan Murray",pos:"PF"},
+  {name:"Brandon Miller",pos:"SF"},{name:"Scoot Henderson",pos:"PG"},{name:"Amen Thompson",pos:"SG"},
+  {name:"Ausar Thompson",pos:"SF"},{name:"Jalen Duren",pos:"C"},{name:"Shaedon Sharpe",pos:"SG"},
+  {name:"Jerami Grant",pos:"PF"},{name:"Deandre Hunter",pos:"SF"},{name:"Cameron Johnson",pos:"SF"},
+  {name:"Kyle Kuzma",pos:"PF"},{name:"Fred VanVleet",pos:"PG"},{name:"Austin Reaves",pos:"SG"},
+  {name:"Marcus Smart",pos:"PG"},{name:"Derrick White",pos:"PG"}
 ];
 
-// ✅ 自由市場常駐 90（真實 NBA 名字，非基石定位）
-const FA_90 = [
-  {name:"Brook Lopez",pos:"C"},
-  {name:"Bobby Portis",pos:"PF"},
-  {name:"Malcolm Brogdon",pos:"PG"},
-  {name:"Terry Rozier",pos:"PG"},
-  {name:"Jordan Clarkson",pos:"SG"},
-  {name:"D'Angelo Russell",pos:"PG"},
-  {name:"Buddy Hield",pos:"SG"},
-  {name:"Josh Hart",pos:"SF"},
-  {name:"Clint Capela",pos:"C"},
-  {name:"Nikola Vucevic",pos:"C"},
-  {name:"Jakob Poeltl",pos:"C"},
-  {name:"Jonas Valanciunas",pos:"C"},
-  {name:"John Collins",pos:"PF"},
-  {name:"Collin Sexton",pos:"SG"},
-  {name:"Bojan Bogdanovic",pos:"SF"},
-  {name:"Bogdan Bogdanovic",pos:"SG"},
-  {name:"Harrison Barnes",pos:"SF"},
-  {name:"PJ Washington",pos:"PF"},
-  {name:"Jaden McDaniels",pos:"SF"},
-  {name:"Herb Jones",pos:"SF"},
-  {name:"Trey Murphy III",pos:"SF"},
-  {name:"Alex Caruso",pos:"SG"},
-  {name:"Kentavious Caldwell-Pope",pos:"SG"},
-  {name:"Bruce Brown",pos:"SG"},
-  {name:"Spencer Dinwiddie",pos:"PG"},
-  {name:"Caris LeVert",pos:"SG"},
-  {name:"Dillon Brooks",pos:"SF"},
-  {name:"Kyle Lowry",pos:"PG"},
-  {name:"Lonzo Ball",pos:"PG"},
-  {name:"Evan Fournier",pos:"SG"},
-  {name:"Kevin Love",pos:"PF"},
-  {name:"Al Horford",pos:"C"},
-  {name:"Steven Adams",pos:"C"},
-  {name:"Andre Drummond",pos:"C"},
-  {name:"Jusuf Nurkic",pos:"C"},
-  {name:"Kelly Olynyk",pos:"C"},
-  {name:"Jae Crowder",pos:"PF"},
-  {name:"Royce O'Neale",pos:"SF"},
-  {name:"Reggie Jackson",pos:"PG"},
-  {name:"Patty Mills",pos:"PG"},
-  {name:"Tim Hardaway Jr.",pos:"SG"},
-  {name:"Luke Kennard",pos:"SG"},
-  {name:"Kyle Anderson",pos:"PF"},
-  {name:"Daniel Gafford",pos:"C"},
-  {name:"Mitchell Robinson",pos:"C"},
-  {name:"Isaiah Hartenstein",pos:"C"},
-  {name:"Naz Reid",pos:"C"},
-  {name:"Gary Trent Jr.",pos:"SG"},
-  {name:"Norman Powell",pos:"SG"},
-  {name:"Ivica Zubac",pos:"C"},
-  {name:"Seth Curry",pos:"SG"},
-  {name:"Joe Ingles",pos:"SF"},
-  {name:"Eric Gordon",pos:"SG"},
-  {name:"Danny Green",pos:"SG"},
-  {name:"Mike Conley",pos:"PG"},
-  {name:"Russell Westbrook",pos:"PG"},
-  {name:"Derrick Rose",pos:"PG"},
-  {name:"Patrick Beverley",pos:"PG"},
-  {name:"Cory Joseph",pos:"PG"},
-  {name:"Gary Payton II",pos:"SG"},
-  {name:"Tyus Jones",pos:"PG"},
-  {name:"Monte Morris",pos:"PG"},
-  {name:"Caleb Martin",pos:"SF"},
-  {name:"Max Strus",pos:"SG"},
-  {name:"Duncan Robinson",pos:"SF"},
-  {name:"Josh Richardson",pos:"SG"},
-  {name:"Cam Payne",pos:"PG"},
-  {name:"Gordon Hayward",pos:"SF"},
-  {name:"Robert Covington",pos:"PF"},
-  {name:"P.J. Tucker",pos:"PF"},
-  {name:"Davis Bertans",pos:"PF"},
-  {name:"Joe Harris",pos:"SF"},
-  {name:"Rui Hachimura",pos:"PF"},
-  {name:"Christian Wood",pos:"C"},
-  {name:"Mo Bamba",pos:"C"},
-  {name:"Cedi Osman",pos:"SF"},
-  {name:"Jae'Sean Tate",pos:"SF"},
-  {name:"Cameron Reddish",pos:"SF"},
-  {name:"Dennis Schroder",pos:"PG"},
-  {name:"Alec Burks",pos:"SG"},
-  {name:"Reggie Bullock",pos:"SF"},
-  {name:"Dario Saric",pos:"PF"},
-  {name:"Mason Plumlee",pos:"C"},
-  {name:"Jeff Green",pos:"PF"},
-  {name:"Thaddeus Young",pos:"PF"},
-  {name:"Goran Dragic",pos:"PG"},
-  {name:"Markieff Morris",pos:"PF"},
-  {name:"Marcus Morris",pos:"PF"},
-  {name:"Shake Milton",pos:"SG"},
-  {name:"Javonte Green",pos:"SF"},
-  {name:"Delon Wright",pos:"PG"},
+const FA_90_RAW = [
+  {name:"Brook Lopez",pos:"C"},{name:"Bobby Portis",pos:"PF"},{name:"Malcolm Brogdon",pos:"PG"},
+  {name:"Terry Rozier",pos:"PG"},{name:"Jordan Clarkson",pos:"SG"},{name:"D'Angelo Russell",pos:"PG"},
+  {name:"Buddy Hield",pos:"SG"},{name:"Josh Hart",pos:"SF"},{name:"Clint Capela",pos:"C"},
+  {name:"Nikola Vucevic",pos:"C"},{name:"Jakob Poeltl",pos:"C"},{name:"Jonas Valanciunas",pos:"C"},
+  {name:"John Collins",pos:"PF"},{name:"Collin Sexton",pos:"SG"},{name:"Bojan Bogdanovic",pos:"SF"},
+  {name:"Bogdan Bogdanovic",pos:"SG"},{name:"Harrison Barnes",pos:"SF"},{name:"PJ Washington",pos:"PF"},
+  {name:"Jaden McDaniels",pos:"SF"},{name:"Herb Jones",pos:"SF"},{name:"Trey Murphy III",pos:"SF"},
+  {name:"Alex Caruso",pos:"SG"},{name:"Kentavious Caldwell-Pope",pos:"SG"},{name:"Bruce Brown",pos:"SG"},
+  {name:"Spencer Dinwiddie",pos:"PG"},{name:"Caris LeVert",pos:"SG"},{name:"Dillon Brooks",pos:"SF"},
+  {name:"Kyle Lowry",pos:"PG"},{name:"Lonzo Ball",pos:"PG"},{name:"Evan Fournier",pos:"SG"},
+  {name:"Kevin Love",pos:"PF"},{name:"Al Horford",pos:"C"},{name:"Steven Adams",pos:"C"},
+  {name:"Andre Drummond",pos:"C"},{name:"Jusuf Nurkic",pos:"C"},{name:"Kelly Olynyk",pos:"C"},
+  {name:"Jae Crowder",pos:"PF"},{name:"Royce O'Neale",pos:"SF"},{name:"Reggie Jackson",pos:"PG"},
+  {name:"Patty Mills",pos:"PG"},{name:"Tim Hardaway Jr.",pos:"SG"},{name:"Luke Kennard",pos:"SG"},
+  {name:"Kyle Anderson",pos:"PF"},{name:"Daniel Gafford",pos:"C"},{name:"Mitchell Robinson",pos:"C"},
+  {name:"Isaiah Hartenstein",pos:"C"},{name:"Naz Reid",pos:"C"},{name:"Gary Trent Jr.",pos:"SG"},
+  {name:"Norman Powell",pos:"SG"},{name:"Ivica Zubac",pos:"C"},{name:"Seth Curry",pos:"SG"},
+  {name:"Joe Ingles",pos:"SF"},{name:"Eric Gordon",pos:"SG"},{name:"Danny Green",pos:"SG"},
+  {name:"Mike Conley",pos:"PG"},{name:"Russell Westbrook",pos:"PG"},{name:"Derrick Rose",pos:"PG"},
+  {name:"Patrick Beverley",pos:"PG"},{name:"Cory Joseph",pos:"PG"},{name:"Gary Payton II",pos:"SG"},
+  {name:"Tyus Jones",pos:"PG"},{name:"Monte Morris",pos:"PG"},{name:"Caleb Martin",pos:"SF"},
+  {name:"Max Strus",pos:"SG"},{name:"Duncan Robinson",pos:"SF"},{name:"Josh Richardson",pos:"SG"},
+  {name:"Cam Payne",pos:"PG"},{name:"Gordon Hayward",pos:"SF"},{name:"Robert Covington",pos:"PF"},
+  {name:"P.J. Tucker",pos:"PF"},{name:"Davis Bertans",pos:"PF"},{name:"Joe Harris",pos:"SF"},
+  {name:"Rui Hachimura",pos:"PF"},{name:"Christian Wood",pos:"C"},{name:"Mo Bamba",pos:"C"},
+  {name:"Cedi Osman",pos:"SF"},{name:"Jae'Sean Tate",pos:"SF"},{name:"Cameron Reddish",pos:"SF"},
+  {name:"Dennis Schroder",pos:"PG"},{name:"Alec Burks",pos:"SG"},{name:"Reggie Bullock",pos:"SF"},
+  {name:"Dario Saric",pos:"PF"},{name:"Mason Plumlee",pos:"C"},{name:"Jeff Green",pos:"PF"},
+  {name:"Thaddeus Young",pos:"PF"},{name:"Goran Dragic",pos:"PG"},{name:"Markieff Morris",pos:"PF"},
+  {name:"Marcus Morris",pos:"PF"},{name:"Shake Milton",pos:"SG"},{name:"Delon Wright",pos:"PG"},
   {name:"Torrey Craig",pos:"SF"}
 ];
 
-// ✅ 新秀池 200（真實 NBA 名字；每季只吐 30）
-const ROOKIE_200 = [
-  // Modern / young
+// Rookie pool (200-ish; dedup & avoid duplicates on release)
+const ROOKIE_200_RAW = [
   {name:"Bilal Coulibaly",pos:"SF"},{name:"Jarace Walker",pos:"PF"},{name:"Cam Whitmore",pos:"SF"},
   {name:"Taylor Hendricks",pos:"PF"},{name:"Cason Wallace",pos:"SG"},{name:"Brandin Podziemski",pos:"SG"},
   {name:"Jaime Jaquez Jr.",pos:"SF"},{name:"Dereck Lively II",pos:"C"},{name:"Keyonte George",pos:"PG"},
@@ -622,63 +526,34 @@ const ROOKIE_200 = [
   {name:"Shaedon Sharpe",pos:"SG"},{name:"Tari Eason",pos:"PF"},{name:"Jeremy Sochan",pos:"PF"},
   {name:"Walker Kessler",pos:"C"},{name:"Bennedict Mathurin",pos:"SG"},{name:"Jaden Ivey",pos:"SG"},
   {name:"Keegan Murray",pos:"PF"},{name:"Jabari Smith Jr.",pos:"PF"},{name:"Josh Giddey",pos:"PG"},
-  {name:"Franz Wagner",pos:"SF"},{name:"Evan Mobley",pos:"PF"},{name:"Scottie Barnes",pos:"SF"},
-  {name:"Paolo Banchero",pos:"PF"},{name:"Cade Cunningham",pos:"PG"},{name:"Jalen Green",pos:"SG"},
-  {name:"RJ Barrett",pos:"SF"},{name:"Zion Williamson",pos:"PF"},{name:"Ja Morant",pos:"PG"},
-  {name:"Trae Young",pos:"PG"},{name:"Deandre Ayton",pos:"C"},{name:"Jaren Jackson Jr.",pos:"PF"},
-  {name:"De'Aaron Fox",pos:"PG"},{name:"Donovan Mitchell",pos:"SG"},{name:"Jayson Tatum",pos:"SF"},
-  {name:"Jaylen Brown",pos:"SG"},{name:"Bam Adebayo",pos:"C"},{name:"Tyrese Maxey",pos:"SG"},
-  {name:"Darius Garland",pos:"PG"},{name:"LaMelo Ball",pos:"PG"},{name:"Anthony Edwards",pos:"SG"},
-  {name:"Victor Wembanyama",pos:"C"},{name:"Chet Holmgren",pos:"C"},{name:"Jalen Williams",pos:"SF"},
-  // Slight older / still real
-  {name:"Devin Booker",pos:"SG"},{name:"Karl-Anthony Towns",pos:"C"},{name:"Nikola Jokic",pos:"C"},
-  {name:"Giannis Antetokounmpo",pos:"PF"},{name:"Joel Embiid",pos:"C"},{name:"Luka Doncic",pos:"PG"},
-  {name:"Shai Gilgeous-Alexander",pos:"PG"},{name:"Tyrese Haliburton",pos:"PG"},{name:"Jamal Murray",pos:"PG"},
-  {name:"DeMar DeRozan",pos:"SF"},{name:"Jimmy Butler",pos:"SF"},{name:"Kyrie Irving",pos:"PG"},
-  {name:"Kawhi Leonard",pos:"SF"},{name:"Paul George",pos:"SF"},{name:"Damian Lillard",pos:"PG"},
-  // Historical stars & solid pros (all real)
   {name:"Derrick Rose",pos:"PG"},{name:"Blake Griffin",pos:"PF"},{name:"John Wall",pos:"PG"},
-  {name:"Klay Thompson",pos:"SG"},{name:"Draymond Green",pos:"PF"},{name:"Bradley Beal",pos:"SG"},
-  {name:"CJ McCollum",pos:"SG"},{name:"Rudy Gobert",pos:"C"},{name:"Pascal Siakam",pos:"PF"},
-  {name:"Kristaps Porzingis",pos:"C"},{name:"Jrue Holiday",pos:"PG"},{name:"James Harden",pos:"SG"},
-  {name:"Stephen Curry",pos:"PG"},{name:"Kevin Durant",pos:"SF"},{name:"LeBron James",pos:"SF"},
-  {name:"Anthony Davis",pos:"PF"},{name:"Chris Paul",pos:"PG"},{name:"Russell Westbrook",pos:"PG"},
-  {name:"Kevin Love",pos:"PF"},{name:"Kyle Lowry",pos:"PG"},{name:"DeAndre Jordan",pos:"C"},
-  {name:"LaMarcus Aldridge",pos:"PF"},{name:"Paul Pierce",pos:"SF"},{name:"Ray Allen",pos:"SG"},
-  {name:"Kevin Garnett",pos:"PF"},{name:"Tim Duncan",pos:"PF"},{name:"Dirk Nowitzki",pos:"PF"},
-  {name:"Steve Nash",pos:"PG"},{name:"Allen Iverson",pos:"SG"},{name:"Tracy McGrady",pos:"SG"},
-  {name:"Vince Carter",pos:"SG"},{name:"Carmelo Anthony",pos:"SF"},{name:"Dwyane Wade",pos:"SG"},
-  {name:"Chris Bosh",pos:"PF"},{name:"Shaquille O'Neal",pos:"C"},{name:"Kobe Bryant",pos:"SG"},
-  {name:"Michael Jordan",pos:"SG"},{name:"Scottie Pippen",pos:"SF"},{name:"Hakeem Olajuwon",pos:"C"},
-  {name:"David Robinson",pos:"C"},{name:"Patrick Ewing",pos:"C"},{name:"Karl Malone",pos:"PF"},
-  {name:"John Stockton",pos:"PG"},{name:"Charles Barkley",pos:"PF"},{name:"Magic Johnson",pos:"PG"},
-  {name:"Larry Bird",pos:"SF"},{name:"Kareem Abdul-Jabbar",pos:"C"},{name:"Wilt Chamberlain",pos:"C"},
-  {name:"Bill Russell",pos:"C"},{name:"Julius Erving",pos:"SF"},{name:"Isiah Thomas",pos:"PG"},
-  {name:"Clyde Drexler",pos:"SG"},{name:"Dominique Wilkins",pos:"SF"},{name:"James Worthy",pos:"SF"},
-  {name:"Reggie Miller",pos:"SG"},{name:"Gary Payton",pos:"PG"},{name:"Shawn Kemp",pos:"PF"},
-  {name:"Chris Webber",pos:"PF"},{name:"Jason Kidd",pos:"PG"},{name:"Grant Hill",pos:"SF"},
-  {name:"Penny Hardaway",pos:"PG"},{name:"Alonzo Mourning",pos:"C"},{name:"Dikembe Mutombo",pos:"C"},
-  {name:"Yao Ming",pos:"C"},{name:"Tracy McGrady",pos:"SG"}, // duplicate -> deduped
+  {name:"Kobe Bryant",pos:"SG"},{name:"Michael Jordan",pos:"SG"},{name:"Tim Duncan",pos:"PF"},
+  {name:"Dirk Nowitzki",pos:"PF"},{name:"Kevin Garnett",pos:"PF"},{name:"Steve Nash",pos:"PG"},
+  {name:"Allen Iverson",pos:"SG"},{name:"Vince Carter",pos:"SG"},{name:"Dwyane Wade",pos:"SG"},
+  {name:"Shaquille O'Neal",pos:"C"},{name:"Hakeem Olajuwon",pos:"C"},{name:"David Robinson",pos:"C"},
+  {name:"Karl Malone",pos:"PF"},{name:"John Stockton",pos:"PG"},{name:"Charles Barkley",pos:"PF"},
+  {name:"Magic Johnson",pos:"PG"},{name:"Larry Bird",pos:"SF"},{name:"Kareem Abdul-Jabbar",pos:"C"},
+  {name:"Wilt Chamberlain",pos:"C"},{name:"Bill Russell",pos:"C"},
+  {name:"Tracy McGrady",pos:"SG"},{name:"Carmelo Anthony",pos:"SF"},{name:"Chris Bosh",pos:"PF"},
   {name:"Manu Ginobili",pos:"SG"},{name:"Tony Parker",pos:"PG"},{name:"Chauncey Billups",pos:"PG"},
-  {name:"Ben Wallace",pos:"C"},{name:"Rip Hamilton",pos:"SG"},{name:"Caron Butler",pos:"SF"},
-  {name:"Gilbert Arenas",pos:"PG"},{name:"Amar'e Stoudemire",pos:"PF"},{name:"Shawn Marion",pos:"PF"},
-  {name:"Metta World Peace",pos:"SF"},{name:"Rashard Lewis",pos:"SF"},{name:"Antawn Jamison",pos:"PF"},
-  {name:"Jermaine O'Neal",pos:"C"},{name:"Peja Stojakovic",pos:"SF"},{name:"Mike Bibby",pos:"PG"},
+  {name:"Ben Wallace",pos:"C"},{name:"Rip Hamilton",pos:"SG"},{name:"Gilbert Arenas",pos:"PG"},
+  {name:"Amar'e Stoudemire",pos:"PF"},{name:"Shawn Marion",pos:"PF"},
+  {name:"Jason Kidd",pos:"PG"},{name:"Grant Hill",pos:"SF"},{name:"Penny Hardaway",pos:"PG"},
+  {name:"Alonzo Mourning",pos:"C"},{name:"Dikembe Mutombo",pos:"C"},{name:"Yao Ming",pos:"C"},
+  {name:"Pau Gasol",pos:"PF"},{name:"Marc Gasol",pos:"C"},{name:"Zach Randolph",pos:"PF"},
+  {name:"Joe Johnson",pos:"SG"},{name:"Jamal Crawford",pos:"SG"},{name:"Andre Iguodala",pos:"SF"},
+  {name:"Tyson Chandler",pos:"C"},{name:"Joakim Noah",pos:"C"},{name:"Kyle Korver",pos:"SG"},
+  {name:"J.J. Redick",pos:"SG"},{name:"Mike Conley",pos:"PG"},{name:"DeMarcus Cousins",pos:"C"},
+  // Fillers (still real NBA names)
+  {name:"Kemba Walker",pos:"PG"},{name:"Gordon Hayward",pos:"SF"},{name:"Isaiah Thomas",pos:"PG"},
+  {name:"Paul Millsap",pos:"PF"},{name:"David West",pos:"PF"},{name:"Brandon Roy",pos:"SG"},
+  {name:"Rudy Gay",pos:"SF"},{name:"Shane Battier",pos:"SF"},{name:"Tayshaun Prince",pos:"SF"},
   {name:"Baron Davis",pos:"PG"},{name:"Deron Williams",pos:"PG"},{name:"Carlos Boozer",pos:"PF"},
-  {name:"Andrew Bynum",pos:"C"},{name:"Pau Gasol",pos:"PF"},{name:"Marc Gasol",pos:"C"},
-  {name:"Zach Randolph",pos:"PF"},{name:"Paul Millsap",pos:"PF"},{name:"David West",pos:"PF"},
-  {name:"Joe Johnson",pos:"SG"},{name:"Jamal Crawford",pos:"SG"},{name:"Jason Terry",pos:"SG"},
-  {name:"Michael Redd",pos:"SG"},{name:"Brandon Roy",pos:"SG"},{name:"Rudy Gay",pos:"SF"},
-  {name:"Andre Iguodala",pos:"SF"},{name:"Danny Granger",pos:"SF"},{name:"Josh Smith",pos:"PF"},
-  {name:"Tyson Chandler",pos:"C"},{name:"Joakim Noah",pos:"C"},{name:"Luol Deng",pos:"SF"},
-  {name:"Kyle Korver",pos:"SG"},{name:"J.J. Redick",pos:"SG"},{name:"Shane Battier",pos:"SF"},
-  {name:"Tayshaun Prince",pos:"SF"},{name:"Mike Conley",pos:"PG"},{name:"Marc Gasol",pos:"C"}, // dup -> deduped
-  {name:"DeMarcus Cousins",pos:"C"},{name:"John Collins",pos:"PF"},{name:"Kemba Walker",pos:"PG"},
-  {name:"Isaiah Thomas",pos:"PG"}, // may conflict with Isiah Thomas; name differs -> ok
-  {name:"Gordon Hayward",pos:"SF"},{name:"Brad Stevens",pos:"SF"} // NOT NBA player -> will be filtered
+  {name:"Peja Stojakovic",pos:"SF"},{name:"Clyde Drexler",pos:"SG"},{name:"Dominique Wilkins",pos:"SF"},
+  {name:"James Worthy",pos:"SF"},{name:"Reggie Miller",pos:"SG"},{name:"Gary Payton",pos:"PG"},
+  {name:"Shawn Kemp",pos:"PF"},{name:"Chris Webber",pos:"PF"}
 ];
 
-// -- Dedup + sanitize helper for lists --
 function normalizeName(n){ return (n||"").trim(); }
 function dedupListByName(list){
   const seen = new Set();
@@ -693,53 +568,6 @@ function dedupListByName(list){
   return out;
 }
 
-// filter obvious non-player (very light rule; you can delete any weird names freely)
-function filterLikelyNBAPlayers(list){
-  // If you see any name that isn't a player, just remove it from arrays above.
-  // Here we auto-remove a couple known non-players from the rookie list.
-  const banned = new Set(["Brad Stevens"]);
-  return list.filter(x=>!banned.has(normalizeName(x.name)));
-}
-
-/* =========================================================
-   Build ACTIVE pool (single pool) from Core90 + FA90
-   ========================================================= */
-const CORE_90_CLEAN = dedupListByName(CORE_90);
-const FA_90_CLEAN = dedupListByName(FA_90);
-
-// We ensure ACTIVE pool is unique by name across both.
-function buildActivePool(){
-  const seen = new Set();
-  const add = (arr, tier)=>arr.forEach(x=>{
-    const name = normalizeName(x.name);
-    if(seen.has(name)) return;
-    seen.add(name);
-    ACTIVE.push(makeActivePlayer(name, x.pos, tier));
-  });
-
-  const ACTIVE = [];
-  add(CORE_90_CLEAN, "core");
-  add(FA_90_CLEAN, "fa");
-
-  // if you really want EXACT 180, ensure arrays are 90+90 unique.
-  return ACTIVE;
-}
-
-// Generate OVR/age ranges by tier; keeps game balanced.
-function makeActivePlayer(name, pos, tier){
-  const baseId = hashToId(name);
-  let ovr, age;
-  if(tier==="core"){
-    ovr = rand(86, 98);
-    age = rand(23, 35);
-  }else{
-    ovr = rand(74, 85);
-    age = rand(24, 36);
-  }
-  return { id: baseId, name, pos, ovr, age, isCore:false, team:null, rookie:false };
-}
-
-// stable-ish ID per name
 function hashToId(str){
   let h = 2166136261;
   for(let i=0;i<str.length;i++){
@@ -750,39 +578,79 @@ function hashToId(str){
   return h;
 }
 
+function makeActivePlayer(name, pos, tier){
+  const id = hashToId(name);
+  let ovr, age;
+  if(tier==="core"){
+    ovr = rand(86, 98);
+    age = rand(23, 35);
+  }else{
+    ovr = rand(74, 85);
+    age = rand(24, 36);
+  }
+  return {
+    id, name, pos, ovr, age,
+    pot: clamp(ovr + rand(3,12), ovr+3, 99),
+    fatigue: 0,
+    isCore:false, team:null, rookie:false
+  };
+}
+
+const CORE_90 = dedupListByName(CORE_90_RAW);
+const FA_90 = dedupListByName(FA_90_RAW);
+const ROOKIE_POOL_200 = dedupListByName(ROOKIE_200_RAW);
+
+function buildActivePool(){
+  const seen = new Set();
+  const ACTIVE = [];
+  const add = (arr,tier)=>arr.forEach(x=>{
+    const name = normalizeName(x.name);
+    if(seen.has(name)) return;
+    seen.add(name);
+    ACTIVE.push(makeActivePlayer(name, x.pos, tier));
+  });
+  add(CORE_90, "core");
+  add(FA_90, "fa");
+  return ACTIVE;
+}
+
 const ACTIVE_POOL = buildActivePool();
 
-// Rookie pool cleaned (dedup + filter)
-const ROOKIE_POOL_200 = dedupListByName(filterLikelyNBAPlayers(ROOKIE_200));
+/* =========================
+   State / Persistence
+   ========================= */
 
-/* =========================================================
-   State
-   ========================================================= */
 function defaultState(){
   return {
-    version: 10,
+    version: 20,
     phase: "TEAM",
     teamLocked: false,
     userTeam: null,
     userTeamId: null,
 
-    // pools
-    activePool: ACTIVE_POOL,          // single pool
-    rookiePool: ROOKIE_POOL_200,      // 200-ish (dedup may shrink slightly if duplicates exist)
-    rookieCursor: 0,                  // releases over seasons
+    activePool: ACTIVE_POOL,
+    rookiePool: ROOKIE_POOL_200,
+    rookieCursor: 0,
 
-    corePool: [],                     // generated from activePool
+    corePool: [],
     chosenCoreIds: [],
 
     league: null,
-    freeAgents: [],                   // generated from activePool (excluding cores assigned to teams)
+    freeAgents: [],
 
     season: 1,
     gamesPerTeam: DEFAULT_GAMES_PER_TEAM,
     dayIndex: 0,
     scheduleDays: [],
 
-    offseason: { active:false, draftDone:false, faDone:false, rookies:[] },
+    offseason: {
+      active:false,
+      draftDone:false,
+      rookies:[],
+      fa: { active:false, order:[], round:1, maxRounds:OFFSEASON_FA_ROUNDS, turnIndex:0 }
+    },
+
+    training: { tp:0, lastDayAwarded:-1 },
 
     log: [],
     createdAt: Date.now(),
@@ -794,9 +662,6 @@ let state = loadState() ?? defaultState();
 syncState();
 renderAll();
 
-/* =========================================================
-   Persistence
-   ========================================================= */
 function saveState(){
   state.updatedAt = Date.now();
   localStorage.setItem(LS_KEY, JSON.stringify(state));
@@ -816,28 +681,56 @@ function hardReset(){
   syncState();
   renderAll();
 }
-function syncState(){
-  state.log = state.log || [];
-  state.offseason = state.offseason || {active:false,draftDone:false,faDone:false,rookies:[]};
-  state.activePool = state.activePool || ACTIVE_POOL;
-  state.rookiePool = state.rookiePool || ROOKIE_POOL_200;
-  state.rookieCursor = state.rookieCursor ?? 0;
 
-  // regenerate corePool from activePool each load (stable)
-  state.corePool = buildCorePoolFromActive(state.activePool);
+function buildCorePoolFromActive(active){
+  const sorted = [...active].sort((a,b)=>b.ovr-a.ovr);
+  return sorted.slice(0, 90).map(p=>({...p}));
+}
+
+function buildLeague(teamNames){
+  return teamNames.map((name, id)=>({ id, name, w:0, l:0, roster:[] }));
+}
+
+function generateSeasonSchedule(teamIds, days){
+  const schedule = [];
+  for(let d=0; d<days; d++){
+    const arr = [...teamIds];
+    shuffle(arr);
+    const matchups = [];
+    for(let i=0;i<arr.length;i+=2){
+      matchups.push([arr[i], arr[i+1]]);
+    }
+    schedule.push(matchups);
+  }
+  return schedule;
+}
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){
+    const j = rand(0,i);
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function syncState(){
+  state.offseason = state.offseason || {active:false,draftDone:false,rookies:[],fa:{active:false,order:[],round:1,maxRounds:OFFSEASON_FA_ROUNDS,turnIndex:0}};
+  state.training = state.training || { tp:0, lastDayAwarded:-1 };
+
+  state.corePool = buildCorePoolFromActive(state.activePool || ACTIVE_POOL);
 
   if(state.league && state.league.length===30 && (!state.scheduleDays || state.scheduleDays.length===0)){
     state.scheduleDays = generateSeasonSchedule(state.league.map(t=>t.id), state.gamesPerTeam);
   }
+
   if(state.league && (!state.freeAgents || !Array.isArray(state.freeAgents))){
     state.freeAgents = buildFreeAgentPoolFromActive();
   }
   saveState();
 }
 
-/* =========================================================
-   Modal helper
-   ========================================================= */
+/* =========================
+   Modal
+   ========================= */
 function openModal({title, bodyHtml, actions}){
   el("modalTitle").textContent = title;
   el("modalBody").innerHTML = bodyHtml;
@@ -857,223 +750,69 @@ el("modalBackdrop").addEventListener("click",(e)=>{
   if(e.target === el("modalBackdrop")) closeModal();
 });
 
-/* =========================================================
-   League + Pools logic
-   ========================================================= */
-function buildCorePoolFromActive(active){
-  // "core candidates" are top 90 by ovr inside active pool
-  const sorted = [...active].sort((a,b)=>b.ovr-a.ovr);
-  return sorted.slice(0, 90).map(p=>({...p}));
-}
+/* =========================
+   Salary / Value / Fatigue
+   ========================= */
 
-function buildLeague(teamNames){
-  return teamNames.map((name, id)=>({ id, name, w:0, l:0, roster:[] }));
+function playerSalary(p){
+  let base = Math.round((p.ovr - 60) * 1.8);
+  if(p.isCore) base += 8;
+  if(p.rookie) base = Math.max(4, base - 6);
+  return Math.max(4, base);
 }
+function teamSalary(team){
+  return (team.roster||[]).reduce((s,p)=>s + playerSalary(p), 0);
+}
+function playerValue(p){
+  let v = p.ovr;
+  if(p.isCore) v += 22;
+  return v;
+}
+function totalValue(players){ return players.reduce((s,p)=>s + playerValue(p), 0); }
+function totalSalary(players){ return players.reduce((s,p)=>s + playerSalary(p), 0); }
 
-function allUsedNamesSet(){
-  const used = new Set();
-  // league
-  if(state.league){
-    for(const t of state.league){
-      for(const p of (t.roster||[])) used.add(p.name);
+function rosterFull(team){ return (team.roster?.length ?? 0) >= MAX_ROSTER; }
+
+function recoverFatigueDaily(){
+  if(!state.league) return;
+  for(const t of state.league){
+    for(const p of (t.roster||[])){
+      p.fatigue = Math.max(0, (p.fatigue ?? 0) - 8);
     }
   }
-  // freeAgents
-  if(state.freeAgents){
-    for(const p of state.freeAgents) used.add(p.name);
-  }
-  // cores chosen but not yet assigned (core screen)
-  if(state.chosenCoreIds && state.corePool){
-    const chosenSet = new Set(state.chosenCoreIds);
-    for(const p of state.corePool){
-      if(chosenSet.has(p.id)) used.add(p.name);
-    }
-  }
-  return used;
 }
 
+/* =========================
+   Pools (FA from active excluding rostered)
+   ========================= */
 function buildFreeAgentPoolFromActive(){
-  // Free agents are ALL active players not currently on any team roster.
   const usedNames = new Set();
   if(state.league){
     for(const t of state.league){
       for(const p of (t.roster||[])) usedNames.add(p.name);
     }
   }
-  // Start from active pool; if not in used, it's FA
-  return state.activePool
+  return (state.activePool||ACTIVE_POOL)
     .filter(p=>!usedNames.has(p.name))
     .map(p=>({ ...p, isCore:false, team:null, rookie:false }));
 }
 
-function aiPickCoresFromCorePool(corePool, usedIds, min=2, max=3){
-  const need = rand(min, max);
-  const picked = [];
-  const pickedPos = new Set();
-
-  const candidates = corePool.filter(p=>!usedIds.has(p.id)).sort((a,b)=>b.ovr-a.ovr);
-
-  for(const p of candidates){
-    if(picked.length>=need) break;
-    if(!pickedPos.has(p.pos)){
-      picked.push(p);
-      pickedPos.add(p.pos);
-      usedIds.add(p.id);
+function allUsedNamesSet(){
+  const used = new Set();
+  if(state.league){
+    for(const t of state.league){
+      for(const p of (t.roster||[])) used.add(p.name);
     }
   }
-  if(picked.length < need){
-    for(const p of candidates){
-      if(picked.length>=need) break;
-      if(usedIds.has(p.id)) continue;
-      picked.push(p);
-      usedIds.add(p.id);
-    }
+  if(state.freeAgents){
+    for(const p of state.freeAgents) used.add(p.name);
   }
-  return picked;
+  return used;
 }
 
-/* =========================================================
-   Value + Trade rules
-   ========================================================= */
-function playerValue(p){
-  let v = p.ovr;
-  if(p.isCore) v += 22;
-  return v;
-}
-function tradeMultiplier(give, get){
-  const coreInvolved = !!(give?.isCore || get?.isCore);
-  return coreInvolved ? 1.80 : 1.10;
-}
-function doTrade(oppTeamId, givePlayerId, getPlayerId){
-  const myTeam = state.league[state.userTeamId];
-  const oppTeam = state.league[oppTeamId];
-
-  const give = myTeam.roster.find(p=>p.id===givePlayerId);
-  const get  = oppTeam.roster.find(p=>p.id===getPlayerId);
-
-  if(!give || !get) return { ok:false, reason:"找不到球員" };
-
-  const giveV = playerValue(give);
-  const getV  = playerValue(get);
-  const mult  = tradeMultiplier(give, get);
-
-  if(giveV < getV * mult){
-    return { ok:false, reason:`對方拒絕：你的報價 ${giveV.toFixed(0)} 太低，需求 ≥ ${(getV*mult).toFixed(0)}` };
-  }
-
-  myTeam.roster = myTeam.roster.filter(p=>p.id!==givePlayerId);
-  oppTeam.roster = oppTeam.roster.filter(p=>p.id!==getPlayerId);
-
-  myTeam.roster.push({...get, team: myTeam.name});
-  oppTeam.roster.push({...give, team: oppTeam.name});
-
-  saveState();
-  return { ok:true, give, get, mult, giveV, getV };
-}
-
-/* =========================================================
-   Free Agency
-   ========================================================= */
-function rosterFull(team){ return (team.roster?.length ?? 0) >= MAX_ROSTER; }
-
-function signFreeAgent(teamId, playerId){
-  const team = state.league[teamId];
-  if(rosterFull(team)) return { ok:false, reason:"名單已滿" };
-
-  const idx = state.freeAgents.findIndex(p=>p.id===playerId);
-  if(idx<0) return { ok:false, reason:"找不到自由球員" };
-
-  const p = state.freeAgents[idx];
-  state.freeAgents.splice(idx,1);
-
-  team.roster.push({ ...p, isCore:false, team: team.name, rookie: !!p.rookie });
-  saveState();
-  return { ok:true, player:p };
-}
-
-function mostNeededPos(team){
-  const count = {PG:0,SG:0,SF:0,PF:0,C:0};
-  for(const p of (team.roster||[])) count[p.pos] = (count[p.pos]||0) + 1;
-  let best="PG", min=Infinity;
-  for(const k of Object.keys(count)){
-    if(count[k] < min){ min=count[k]; best=k; }
-  }
-  return best;
-}
-
-function freeAgentScore(team, player){
-  let score = 0;
-  if(mostNeededPos(team) === player.pos) score += 40;
-  score += player.ovr;
-  score += (MAX_ROSTER - team.roster.length) * 2;
-  score += rand(0, 5);
-  return score;
-}
-
-// Season: AI signs a bit each day
-function aiSignFreeAgentsDaily(){
-  if(!state.league || !state.freeAgents || state.freeAgents.length===0) return;
-
-  // teams with smaller rosters first
-  const teams = [...state.league].sort((a,b)=>(a.roster.length-b.roster.length));
-  for(const team of teams){
-    if(state.freeAgents.length===0) break;
-    if(rosterFull(team)) continue;
-    if(Math.random() > INSEASON_AI_SIGN_CHANCE) continue;
-
-    const need = mostNeededPos(team);
-    let candidates = [...state.freeAgents].sort((x,y)=> (y.ovr-x.ovr) - (x.age-y.age));
-    let pick = candidates.find(p=>p.pos===need) || candidates[0];
-    if(!pick) continue;
-
-    const res = signFreeAgent(team.id, pick.id);
-    if(res.ok && res.player.ovr >= 83){
-      log(`AI 簽下：${team.name} 簽下 ${res.player.name}（${res.player.pos} ${res.player.ovr}）`, "muted");
-    }
-  }
-}
-
-// Offseason: autopick FA in reverse standings order (snake rounds)
-function offseasonAutoFillAllTeams(target = OFFSEASON_AUTOFILL_TARGET){
-  if(!state.league || !state.freeAgents) return;
-  const order = standingsSorted().slice().reverse().map(t=>t.id); // worst -> best
-
-  let loops = 0;
-  while(loops < 25){ // safety
-    loops++;
-    let any = false;
-
-    for(const teamId of order){
-      const team = state.league[teamId];
-      if(rosterFull(team)) continue;
-      if(team.roster.length >= target) continue;
-      if(state.freeAgents.length===0) break;
-
-      // pick best by score
-      let best = null, bestScore = -Infinity;
-      for(const p of state.freeAgents){
-        const s = freeAgentScore(team, p);
-        if(s > bestScore){ bestScore = s; best = p; }
-      }
-      if(!best) continue;
-
-      const res = signFreeAgent(teamId, best.id);
-      if(res.ok){
-        any = true;
-      }
-    }
-
-    if(!any) break;
-    // stop if all teams reached target or FA empty
-    if(state.freeAgents.length===0) break;
-    const leftToFill = state.league.some(t=>t.roster.length < target && !rosterFull(t));
-    if(!leftToFill) break;
-  }
-}
-
-/* =========================================================
-   Season simulation
-   ========================================================= */
+/* =========================
+   Standings / Sim
+   ========================= */
 function teamOVR(team){
   const roster = team.roster || [];
   if(roster.length===0) return 60;
@@ -1106,26 +845,6 @@ function simulateGame(teamA, teamB){
   }
   return { aWin, scoreA, scoreB, oA, oB, pA };
 }
-function generateSeasonSchedule(teamIds, days){
-  const schedule = [];
-  for(let d=0; d<days; d++){
-    const arr = [...teamIds];
-    shuffle(arr);
-    const matchups = [];
-    for(let i=0;i<arr.length;i+=2){
-      matchups.push([arr[i], arr[i+1]]);
-    }
-    schedule.push(matchups);
-  }
-  return schedule;
-}
-function shuffle(a){
-  for(let i=a.length-1;i>0;i--){
-    const j = rand(0,i);
-    [a[i],a[j]]=[a[j],a[i]];
-  }
-  return a;
-}
 function standingsSorted(){
   return [...state.league].sort((x,y)=>{
     const px = x.w/(x.w+x.l || 1);
@@ -1135,15 +854,206 @@ function standingsSorted(){
   });
 }
 
-/* =========================================================
-   Draft: Rookie pool released over seasons (30 per season)
-   ========================================================= */
+/* =========================
+   Training (TP, fatigue, POT)
+   ========================= */
+function awardTrainingPointsForDay(){
+  if(!state.training) state.training = { tp:0, lastDayAwarded:-1 };
+  if(state.training.lastDayAwarded === state.dayIndex) return;
+  state.training.tp += 2;
+  state.training.lastDayAwarded = state.dayIndex;
+}
+
+function trainPlayer(teamId, playerId){
+  const team = state.league[teamId];
+  const p = team.roster.find(x=>x.id===playerId);
+  if(!p) return { ok:false, reason:"找不到球員" };
+  if(!state.training) state.training = { tp:0, lastDayAwarded:-1 };
+  if(state.training.tp < 2) return { ok:false, reason:"訓練點數不足（需要 2 TP）" };
+
+  state.training.tp -= 2;
+
+  const fatiguePenalty = (p.fatigue ?? 0) >= 60 ? 0.6 : ((p.fatigue ?? 0) >= 30 ? 0.85 : 1.0);
+  const agePenalty = (p.age >= 32) ? 0.6 : (p.age >= 28 ? 0.85 : 1.0);
+  const rookieBonus = p.rookie ? 1.15 : 1.0;
+
+  let delta = 0;
+  const roll = Math.random();
+  if(roll < 0.15) delta = 2;
+  else if(roll < 0.65) delta = 1;
+  else delta = 0;
+
+  const factor = fatiguePenalty * agePenalty * rookieBonus;
+  const realGain = Math.random() < factor ? delta : Math.max(0, delta-1);
+
+  const before = p.ovr;
+  if(realGain > 0){
+    p.ovr = Math.min(p.pot ?? 99, p.ovr + realGain);
+    if(p.pot != null && p.pot < 99 && Math.random()<0.08) p.pot += 1;
+    p.fatigue = Math.min(100, (p.fatigue ?? 0) + 20);
+  }else{
+    p.fatigue = Math.min(100, (p.fatigue ?? 0) + 10);
+  }
+  return { ok:true, gain: p.ovr - before, player:p };
+}
+
+/* =========================
+   Free Agency (Pure manual)
+   - Regular season: user can sign anytime (manual)
+   - Offseason: turn-based; only user can sign when it's user's turn
+   ========================= */
+function signFreeAgent(teamId, playerId){
+  const team = state.league[teamId];
+  if(rosterFull(team)) return { ok:false, reason:"名單已滿" };
+
+  const idx = state.freeAgents.findIndex(p=>p.id===playerId);
+  if(idx<0) return { ok:false, reason:"找不到自由球員" };
+
+  const p = state.freeAgents[idx];
+
+  // Salary cap check
+  if(teamSalary(team) + playerSalary(p) > CAP){
+    return { ok:false, reason:`超過薪資上限：簽下後會是 ${teamSalary(team)+playerSalary(p)}/${CAP}` };
+  }
+
+  // Offseason turn-based restriction (only for user team)
+  if(state.offseason?.active && state.offseason?.fa?.active){
+    const fa = state.offseason.fa;
+    const currentTeamId = fa.order[fa.turnIndex];
+    if(teamId !== currentTeamId){
+      return { ok:false, reason:"目前不是這支球隊的回合" };
+    }
+    if(teamId !== state.userTeamId){
+      return { ok:false, reason:"休賽季只有你需要手動簽；AI 會自動跳過（純手動設定）" };
+    }
+  }
+
+  state.freeAgents.splice(idx,1);
+  team.roster.push({ ...p, isCore:false, team: team.name, rookie: !!p.rookie });
+
+  return { ok:true, player:p };
+}
+
+function startOffseasonFreeAgency(rounds = OFFSEASON_FA_ROUNDS){
+  const order = standingsSorted().slice().reverse().map(t=>t.id); // worst -> best
+  state.offseason.fa = { active:true, order, round:1, maxRounds:rounds, turnIndex:0 };
+  log(`休賽季自由市場開始：共 ${rounds} 輪，依上季戰績倒序輪流。`, "warnTxt");
+  saveState();
+  nextFATurn();
+}
+
+function advanceTurn(){
+  const fa = state.offseason.fa;
+  fa.turnIndex++;
+  if(fa.turnIndex >= fa.order.length){
+    fa.turnIndex = 0;
+    fa.round++;
+  }
+  saveState();
+  nextFATurn();
+}
+
+function nextFATurn(){
+  const fa = state.offseason?.fa;
+  if(!state.offseason?.active || !fa?.active) return;
+
+  if(state.freeAgents.length === 0){
+    fa.active = false;
+    saveState();
+    log("休賽季自由市場結束：自由球員用完。", "warnTxt");
+    return;
+  }
+  if(fa.round > fa.maxRounds){
+    fa.active = false;
+    saveState();
+    log(`休賽季自由市場結束：已完成 ${fa.maxRounds} 輪。`, "warnTxt");
+    return;
+  }
+
+  const teamId = fa.order[fa.turnIndex];
+  const team = state.league[teamId];
+
+  // full roster or already cap-stuck (optional: still let them try) -> skip
+  if(rosterFull(team)){
+    advanceTurn();
+    return;
+  }
+
+  // Only user signs (pure manual): AI always skip
+  if(teamId !== state.userTeamId){
+    advanceTurn();
+    return;
+  }
+
+  // User turn: prompt choices
+  openUserFAModal(team);
+}
+
+function openUserFAModal(team){
+  const fa = state.offseason.fa;
+  const mySalary = teamSalary(team);
+
+  const show = [...state.freeAgents]
+    .sort((a,b)=>b.ovr-a.ovr)
+    .slice(0, 12);
+
+  const rows = show.map(p=>{
+    const sal = playerSalary(p);
+    const can = !rosterFull(team) && (mySalary + sal <= CAP);
+    return `
+      <div class="row space" style="padding:8px;border-bottom:1px solid rgba(255,255,255,.06)">
+        <div>
+          <b>${escapeHtml(p.name)}</b>
+          <div class="tiny muted">${escapeHtml(p.pos)} · OVR ${p.ovr} · 薪資 ${sal} · 你的薪資 ${mySalary}/${CAP}</div>
+        </div>
+        <button class="primary" data-sign="${p.id}" ${can ? "" : "disabled"}>簽下</button>
+      </div>
+    `;
+  }).join("");
+
+  openModal({
+    title:`休賽季自由市場（第 ${fa.round}/${fa.maxRounds} 輪）你的回合：${team.name}`,
+    bodyHtml: `
+      <div class="tiny muted">你這回合可簽 1 人或 Skip。純手動：AI 不簽。</div>
+      <div style="height:10px"></div>
+      <div class="body" id="userFABox" style="padding:0">${rows || `<div class="tiny muted" style="padding:10px">沒有可簽球員</div>`}</div>
+      <div class="tiny warnTxt" style="margin-top:10px">提示：若你被薪資卡住，先交易/釋出再回來。</div>
+    `,
+    actions:[
+      {label:"Skip（跳過）", className:"ghost", onClick: ()=>{ closeModal(); advanceTurn(); renderAll(); }},
+      {label:"打開自由市場頁", className:"blue", onClick: ()=>{ closeModal(); state.phase="FA"; saveState(); renderAll(); }}
+    ]
+  });
+
+  setTimeout(()=>{
+    const box = document.getElementById("userFABox");
+    if(!box) return;
+    box.querySelectorAll("button[data-sign]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const pid = Number(btn.getAttribute("data-sign"));
+        const res = signFreeAgent(state.userTeamId, pid);
+        if(res.ok){
+          log(`休賽季FA：你簽下 ${res.player.name}（${res.player.pos} ${res.player.ovr}，薪資 ${playerSalary(res.player)}）`, "goodTxt");
+        }else{
+          log(`簽約失敗：${res.reason}`, "badTxt");
+        }
+        closeModal();
+        advanceTurn();
+        renderAll();
+      });
+    });
+  },0);
+}
+
+/* =========================
+   Draft (release 30 rookies/season)
+   ========================= */
 function genRookieBatch(count=30){
   const used = allUsedNamesSet();
   const out = [];
   let tries = 0;
 
-  while(out.length < count && tries < 2000){
+  while(out.length < count && tries < 3000){
     tries++;
     if(state.rookieCursor >= state.rookiePool.length) break;
 
@@ -1151,15 +1061,18 @@ function genRookieBatch(count=30){
     state.rookieCursor++;
 
     if(!src) break;
-    if(used.has(src.name)) continue; // avoid duplicates with active/league/FA
+    if(used.has(src.name)) continue;
     used.add(src.name);
 
+    const ovr = rand(72, 80);
     out.push({
       id: 200000 + state.rookieCursor,
       name: src.name,
       pos: src.pos,
-      ovr: rand(72, 80),
+      ovr,
       age: rand(19, 22),
+      pot: clamp(ovr + rand(6,18), ovr+6, 99),
+      fatigue: 0,
       isCore:false,
       rookie:true,
       team:null
@@ -1171,39 +1084,34 @@ function genRookieBatch(count=30){
 function beginOffseasonIfNeeded(){
   if(state.offseason?.active) return;
 
-  state.offseason = state.offseason || {active:false,draftDone:false,faDone:false,rookies:[]};
   state.offseason.active = true;
   state.offseason.draftDone = false;
-  state.offseason.faDone = false;
   state.offseason.rookies = genRookieBatch(30);
+  state.offseason.fa = { active:false, order:[], round:1, maxRounds:OFFSEASON_FA_ROUNDS, turnIndex:0 };
 
   saveState();
 
   openModal({
     title:"休賽季開始",
     bodyHtml: `
-      <div class="tiny muted">例行賽結束，進入休賽季流程：</div>
+      <div class="tiny muted">例行賽結束，進入休賽季：</div>
       <ul class="tiny muted" style="margin:8px 0 0 18px;line-height:1.6">
-        <li>選秀（每隊一位新秀，依排名倒序）</li>
-        <li>補強（你可選手動/自動；AI 會自動）</li>
-        <li>準備好後按「新賽季」</li>
+        <li>選秀（每隊 1 位，依排名倒序）</li>
+        <li>自由市場（${OFFSEASON_FA_ROUNDS} 輪，倒序輪流；純手動：只有你簽）</li>
+        <li>按「新賽季」開季</li>
       </ul>
-      <div class="tiny warnTxt" style="margin-top:10px">建議：先選秀，再補強。</div>
     `,
     actions:[
       {label:"開始選秀", className:"primary", onClick: ()=>{ closeModal(); runDraft(); }},
-      {label:"先去自由市場", className:"ghost", onClick: ()=>{ closeModal(); state.phase="FA"; saveState(); renderAll(); }}
+      {label:"先看自由市場", className:"ghost", onClick: ()=>{ closeModal(); state.phase="FA"; saveState(); renderAll(); }}
     ]
   });
 }
 
 function runDraft(){
   if(!state.offseason.active || state.offseason.draftDone) {
-    openModal({
-      title:"選秀狀態",
-      bodyHtml:`<div class="tiny muted">選秀已完成或尚未進入休賽季。</div>`,
-      actions:[{label:"OK", className:"primary", onClick: closeModal}]
-    });
+    openModal({ title:"選秀狀態", bodyHtml:`<div class="tiny muted">選秀已完成或尚未進入休賽季。</div>`,
+      actions:[{label:"OK", className:"primary", onClick: closeModal}] });
     return;
   }
 
@@ -1215,8 +1123,15 @@ function runDraft(){
     if(idx>=order.length){
       state.offseason.draftDone = true;
       saveState();
-      log(`選秀完成：每隊各選 1 位新秀（本季釋出 ${state.offseason.rookies.length + 30 - rookies.length} 人批次）。`, "warnTxt");
-      openOffseasonFAChoice();
+      log(`選秀完成：本季釋出新秀 30 人（池子累積 ${state.rookiePool.length - state.rookieCursor} 人未釋出）。`, "warnTxt");
+      openModal({
+        title:"選秀完成",
+        bodyHtml:`<div class="tiny muted">接著進入休賽季自由市場（輪流簽）。</div>`,
+        actions:[
+          {label:"開始休賽季自由市場", className:"primary", onClick: ()=>{ closeModal(); startOffseasonFreeAgency(OFFSEASON_FA_ROUNDS); renderAll(); }},
+          {label:"稍後再說", className:"ghost", onClick: closeModal}
+        ]
+      });
       return;
     }
 
@@ -1228,35 +1143,37 @@ function runDraft(){
       return;
     }
     if(rookies.length===0){
-      // no rookies left (shouldn't happen usually), end draft
       state.offseason.draftDone = true;
       saveState();
-      openOffseasonFAChoice();
+      startOffseasonFreeAgency(OFFSEASON_FA_ROUNDS);
+      renderAll();
       return;
     }
 
     if(teamId === myId){
       const options = rookies.slice(0,5);
-      const rows = options.map(r=>`
-        <div class="row space" style="padding:8px;border-bottom:1px solid rgba(255,255,255,.06)">
-          <div>
-            <b>${escapeHtml(r.name)}</b>
-            <div class="tiny muted">${escapeHtml(r.pos)} · OVR ${r.ovr} · 年齡 ${r.age}</div>
+      const rows = options.map(r=>{
+        const sal = playerSalary(r);
+        const can = teamSalary(team) + sal <= CAP;
+        return `
+          <div class="row space" style="padding:8px;border-bottom:1px solid rgba(255,255,255,.06)">
+            <div>
+              <b>${escapeHtml(r.name)}</b>
+              <div class="tiny muted">${escapeHtml(r.pos)} · OVR ${r.ovr} · POT ${r.pot} · 薪資 ${sal}</div>
+            </div>
+            <button class="primary" data-pick="${r.id}" ${can ? "" : "disabled"}>選他</button>
           </div>
-          <button class="primary" data-pick="${r.id}">選他</button>
-        </div>
-      `).join("");
+        `;
+      }).join("");
 
       openModal({
         title:`你的選秀順位：${team.name}`,
         bodyHtml: `
-          <div class="tiny muted">從前 5 新秀中選 1 位加入球隊（非基石）。</div>
+          <div class="tiny muted">從前 5 新秀中選 1 位加入球隊（會檢查薪資上限）。</div>
           <div style="height:10px"></div>
           <div class="body" id="draftOptions" style="padding:0">${rows}</div>
         `,
-        actions:[
-          {label:"取消（先不選）", className:"ghost", onClick: closeModal}
-        ]
+        actions:[{label:"取消", className:"ghost", onClick: closeModal}]
       });
 
       setTimeout(()=>{
@@ -1268,23 +1185,29 @@ function runDraft(){
             const rIdx = rookies.findIndex(x=>x.id===pid);
             if(rIdx<0) return;
             const rookie = rookies.splice(rIdx,1)[0];
+
+            if(teamSalary(team) + playerSalary(rookie) > CAP){
+              log(`選秀失敗：${rookie.name} 會讓你超 cap`, "badTxt");
+              return;
+            }
+
             team.roster.push({ ...rookie, team: team.name });
             saveState();
             closeModal();
-            log(`你選到新秀：${rookie.name}（${rookie.pos} ${rookie.ovr}）`, "goodTxt");
+            log(`你選到新秀：${rookie.name}（${rookie.pos} ${rookie.ovr}，薪資 ${playerSalary(rookie)}）`, "goodTxt");
             pickLoop(idx+1);
           });
         });
       },0);
 
     }else{
-      const needPos = mostNeededPos(team);
-      let pickIndex = rookies.findIndex(r=>r.pos===needPos);
-      if(pickIndex<0) pickIndex = 0;
+      // AI picks best fit by need and within cap (simple)
+      const need = mostNeededPos(team);
+      let pickIndex = rookies.findIndex(r=>r.pos===need && (teamSalary(team)+playerSalary(r) <= CAP));
+      if(pickIndex<0) pickIndex = rookies.findIndex(r=>teamSalary(team)+playerSalary(r) <= CAP);
+      if(pickIndex<0){ pickLoop(idx+1); return; } // cap-stuck
       const rookie = rookies.splice(pickIndex,1)[0];
-      if(rookie){
-        team.roster.push({ ...rookie, team: team.name });
-      }
+      team.roster.push({ ...rookie, team: team.name });
       pickLoop(idx+1);
     }
   };
@@ -1292,40 +1215,20 @@ function runDraft(){
   pickLoop(0);
 }
 
-function openOffseasonFAChoice(){
-  openModal({
-    title:"休賽季補強（折衷：你可選擇）",
-    bodyHtml: `
-      <div class="tiny muted">選秀完成後，你要怎麼處理自由市場補強？</div>
-      <div class="tiny muted" style="margin-top:8px;line-height:1.6">
-        <b>手動補強：</b>你自己去自由市場簽人（最有GM感）。<br/>
-        <b>自動補強：</b>系統依上季戰績倒序，輪流幫全聯盟補到 <b>${OFFSEASON_AUTOFILL_TARGET}</b> 人（你隊也一樣公平）。
-      </div>
-      <div class="tiny warnTxt" style="margin-top:10px">你也可以先手動簽幾個，再選自動把剩下的補齊。</div>
-    `,
-    actions:[
-      {label:"手動補強（去自由市場）", className:"primary", onClick: ()=>{ closeModal(); state.phase="FA"; saveState(); renderAll(); }},
-      {label:"自動補強（全聯盟）", className:"warn", onClick: ()=>{
-        closeModal();
-        offseasonAutoFillAllTeams(OFFSEASON_AUTOFILL_TARGET);
-        state.offseason.faDone = true;
-        saveState();
-        log(`休賽季自動補強完成：全聯盟補到目標人數（戰績倒序輪流）。`, "goodTxt");
-        renderAll();
-      }},
-      {label:"稍後再說", className:"ghost", onClick: closeModal}
-    ]
-  });
-}
-
-/* =========================================================
-   Sim day / new season
-   ========================================================= */
+/* =========================
+   Offseason / Season progression
+   ========================= */
 function simulateOneDay(){
   if(!state.league) return;
 
+  // Training points + recovery always happen when you simulate a day (even if offseason stopped)
+  awardTrainingPointsForDay();
+
   if(state.offseason?.active){
-    log("目前是休賽季：請先完成選秀/補強，然後按「新賽季」。", "warnTxt");
+    // Offseason day simulation is not used in this version. Keep TP award & fatigue recovery.
+    recoverFatigueDaily();
+    saveState();
+    log("目前是休賽季：請完成選秀/休賽季自由市場，然後按「新賽季」。", "warnTxt");
     return;
   }
 
@@ -1354,22 +1257,14 @@ function simulateOneDay(){
     }
   }
 
-  aiSignFreeAgentsDaily();
+  recoverFatigueDaily();
 
   state.dayIndex++;
   if(myGameSummary) log(`Day ${state.dayIndex}: ${myGameSummary}`, "goodTxt");
 
   if(state.dayIndex >= state.gamesPerTeam){
-    const top8 = standingsSorted().slice(0,8).map((t,i)=>`${i+1}. ${t.name}`).join("<br/>");
-    log("例行賽結束！Top 8 已產生。", "warnTxt");
-    openModal({
-      title:"季末結算（Top 8）",
-      bodyHtml:`<div class="tiny muted">賽季 S${state.season} 例行賽結束。</div>
-               <div style="height:10px"></div>
-               <div class="body tiny" style="line-height:1.6">${top8}</div>
-               <div class="tiny warnTxt" style="margin-top:10px">接著進入休賽季：選秀 → 補強（手動/自動）。</div>`,
-      actions:[{label:"OK", className:"primary", onClick: ()=>{ closeModal(); beginOffseasonIfNeeded(); }}]
-    });
+    log("例行賽結束！進入休賽季。", "warnTxt");
+    beginOffseasonIfNeeded();
   }
 
   saveState();
@@ -1378,29 +1273,25 @@ function simulateOneDay(){
 function startNewSeason(){
   if(!state.league) return;
 
-  // if offseason active, give reminder: draft should be done ideally
   if(state.offseason?.active && !state.offseason.draftDone){
     openModal({
-      title:"建議先完成選秀",
-      bodyHtml:`<div class="tiny warnTxt"><b>你還沒完成選秀。</b></div>
-               <div class="tiny muted" style="margin-top:8px">要直接開季也可以，但你會少一個補強機會。</div>`,
+      title:"還沒完成選秀",
+      bodyHtml:`<div class="tiny warnTxt"><b>建議先完成選秀</b>，不然你少一個補強機會。</div>`,
       actions:[
         {label:"現在選秀", className:"primary", onClick: ()=>{ closeModal(); runDraft(); }},
-        {label:"先不選，直接開季", className:"warn", onClick: ()=>{ closeModal(); reallyStartNewSeason(); }}
+        {label:"直接開季", className:"warn", onClick: ()=>{ closeModal(); reallyStartNewSeason(); }}
       ]
     });
     return;
   }
 
-  // if offseason active and fa choice not done, offer
-  if(state.offseason?.active && state.offseason.draftDone && !state.offseason.faDone){
+  if(state.offseason?.active && state.offseason?.fa?.active){
     openModal({
-      title:"休賽季補強還沒處理",
-      bodyHtml:`<div class="tiny muted">你要先進行休賽季補強嗎？</div>
-                <div class="tiny muted" style="margin-top:8px">你可以：手動補強 或 自動補強，再開季。</div>`,
+      title:"休賽季自由市場還沒結束",
+      bodyHtml:`<div class="tiny muted">目前還在輪流簽的過程。你可以先把回合跑完（或一直 Skip），再開季。</div>`,
       actions:[
-        {label:"補強選擇", className:"primary", onClick: ()=>{ closeModal(); openOffseasonFAChoice(); }},
-        {label:"直接開季", className:"warn", onClick: ()=>{ closeModal(); reallyStartNewSeason(); }}
+        {label:"繼續跑回合", className:"primary", onClick: ()=>{ closeModal(); nextFATurn(); }},
+        {label:"強制結束並開季", className:"warn", onClick: ()=>{ closeModal(); state.offseason.fa.active=false; reallyStartNewSeason(); }}
       ]
     });
     return;
@@ -1415,52 +1306,228 @@ function reallyStartNewSeason(){
   for(const t of state.league){ t.w=0; t.l=0; }
   state.scheduleDays = generateSeasonSchedule(state.league.map(t=>t.id), state.gamesPerTeam);
 
-  state.offseason = { active:false, draftDone:false, faDone:false, rookies:[] };
+  state.offseason.active = false;
+  state.offseason.draftDone = false;
+  state.offseason.rookies = [];
+  state.offseason.fa = { active:false, order:[], round:1, maxRounds:OFFSEASON_FA_ROUNDS, turnIndex:0 };
 
   log(`新賽季 S${state.season} 開始（每隊 ${state.gamesPerTeam} 場）。`, "warnTxt");
   saveState();
 }
 
-/* =========================================================
-   Logging
-   ========================================================= */
+/* =========================
+   Team building / Cores
+   ========================= */
+function aiPickCoresFromCorePool(corePool, usedIds, min=2, max=3){
+  const need = rand(min, max);
+  const picked = [];
+  const pickedPos = new Set();
+
+  const candidates = corePool.filter(p=>!usedIds.has(p.id)).sort((a,b)=>b.ovr-a.ovr);
+
+  for(const p of candidates){
+    if(picked.length>=need) break;
+    if(!pickedPos.has(p.pos)){
+      picked.push(p);
+      pickedPos.add(p.pos);
+      usedIds.add(p.id);
+    }
+  }
+  if(picked.length < need){
+    for(const p of candidates){
+      if(picked.length>=need) break;
+      if(usedIds.has(p.id)) continue;
+      picked.push(p);
+      usedIds.add(p.id);
+    }
+  }
+  return picked;
+}
+
+function chooseTeam(teamName){
+  state.userTeam = teamName;
+  state.teamLocked = true;
+  state.phase = "CORE";
+  state.chosenCoreIds = [];
+  state.corePool = buildCorePoolFromActive(state.activePool);
+  saveState();
+  renderAll();
+}
+
+function finalizeCoreAndLeague(){
+  state.league = buildLeague(TEAMS);
+  state.userTeamId = TEAMS.indexOf(state.userTeam);
+
+  const chosen = new Set(state.chosenCoreIds);
+  const myCores = state.corePool
+    .filter(p=>chosen.has(p.id))
+    .map(p=>({...p, isCore:true, team: state.userTeam}));
+
+  // Salary cap check for cores (rare but possible)
+  const myCap = myCores.reduce((s,p)=>s+playerSalary(p),0);
+  if(myCap > CAP){
+    openModal({
+      title:"基石選太貴",
+      bodyHtml:`<div class="tiny badTxt">你選的基石總薪資 ${myCap}/${CAP} 超過上限。</div>
+                <div class="tiny muted" style="margin-top:8px">請改成 2 位基石或選比較便宜的組合。</div>`,
+      actions:[{label:"OK", className:"primary", onClick: closeModal}]
+    });
+    return;
+  }
+
+  const usedIds = new Set(myCores.map(p=>p.id));
+  state.league[state.userTeamId].roster = myCores;
+
+  // AI cores: still pick 2-3 but will skip picks that break cap (simple)
+  for(const team of state.league){
+    if(team.id === state.userTeamId) continue;
+    const picked = aiPickCoresFromCorePool(state.corePool, usedIds, 2, 3)
+      .map(p=>({...p, isCore:true, team: team.name}));
+    // ensure within cap: if not, drop the most expensive
+    let roster = picked;
+    while(roster.length>0 && roster.reduce((s,p)=>s+playerSalary(p),0) > CAP){
+      roster.sort((a,b)=>playerSalary(b)-playerSalary(a));
+      roster.shift();
+    }
+    team.roster = roster;
+  }
+
+  state.dayIndex = 0;
+  state.scheduleDays = generateSeasonSchedule(state.league.map(t=>t.id), state.gamesPerTeam);
+
+  state.freeAgents = buildFreeAgentPoolFromActive();
+
+  state.offseason.active = false;
+  state.offseason.draftDone = false;
+  state.offseason.rookies = [];
+  state.offseason.fa = { active:false, order:[], round:1, maxRounds:OFFSEASON_FA_ROUNDS, turnIndex:0 };
+
+  log(`你已完成建隊：${state.userTeam}（基石 ${myCores.length} 位）。`, "goodTxt");
+  log(`賽季 S${state.season} 開始（每隊 ${state.gamesPerTeam} 場）。`, "warnTxt");
+
+  state.phase = "HUB";
+  saveState();
+  renderAll();
+}
+
+function toggleCorePick(playerId){
+  const idx = state.chosenCoreIds.indexOf(playerId);
+  if(idx >= 0){
+    state.chosenCoreIds.splice(idx,1);
+  }else{
+    if(state.chosenCoreIds.length >= 3){
+      openModal({
+        title:"已達上限",
+        bodyHtml:`<div class="tiny muted">你最多只能選 <b>3</b> 位基石。</div>`,
+        actions:[{label:"OK", className:"primary", onClick: closeModal}]
+      });
+      return;
+    }
+    state.chosenCoreIds.push(playerId);
+  }
+  saveState();
+  renderAll();
+}
+
+/* =========================
+   Trade (multi-player, cap check)
+   ========================= */
+function tradeMultiplierMulti(givePlayers, getPlayers){
+  const coreInvolved = [...givePlayers, ...getPlayers].some(p=>p.isCore);
+  return coreInvolved ? 1.80 : 1.10;
+}
+
+function doTradeMulti(oppTeamId, giveIds, getIds){
+  const myTeam = state.league[state.userTeamId];
+  const oppTeam = state.league[oppTeamId];
+
+  if(!giveIds.length || !getIds.length){
+    return { ok:false, reason:"至少要選 1 位送出 + 1 位得到" };
+  }
+
+  const givePlayers = myTeam.roster.filter(p=>giveIds.includes(p.id));
+  const getPlayers  = oppTeam.roster.filter(p=>getIds.includes(p.id));
+
+  if(givePlayers.length !== giveIds.length) return { ok:false, reason:"你的送出清單有不存在的球員" };
+  if(getPlayers.length  !== getIds.length)  return { ok:false, reason:"你的得到清單有不存在的球員" };
+
+  // roster cap check
+  const myAfterCount  = myTeam.roster.length  - givePlayers.length + getPlayers.length;
+  const oppAfterCount = oppTeam.roster.length - getPlayers.length  + givePlayers.length;
+  if(myAfterCount > MAX_ROSTER)  return { ok:false, reason:`交易後你隊會超過名單上限（${myAfterCount}/${MAX_ROSTER}）` };
+  if(oppAfterCount > MAX_ROSTER) return { ok:false, reason:`交易後對手會超過名單上限（${oppAfterCount}/${MAX_ROSTER}）` };
+
+  const giveV = totalValue(givePlayers);
+  const getV  = totalValue(getPlayers);
+  const mult  = tradeMultiplierMulti(givePlayers, getPlayers);
+
+  // salary cap after trade
+  const mySalaryAfter =
+    teamSalary(myTeam) - totalSalary(givePlayers) + totalSalary(getPlayers);
+  const oppSalaryAfter =
+    teamSalary(oppTeam) - totalSalary(getPlayers) + totalSalary(givePlayers);
+
+  if(mySalaryAfter > CAP) return { ok:false, reason:`交易後你隊薪資超過上限（${mySalaryAfter}/${CAP}）` };
+  if(oppSalaryAfter > CAP) return { ok:false, reason:`交易後對手薪資超過上限（${oppSalaryAfter}/${CAP}）` };
+
+  // value check
+  if(giveV < getV * mult){
+    return { ok:false, reason:`對方拒絕：你的總價值 ${giveV.toFixed(0)} 太低，需求 ≥ ${(getV*mult).toFixed(0)}` };
+  }
+
+  // execute
+  myTeam.roster  = myTeam.roster.filter(p=>!giveIds.includes(p.id));
+  oppTeam.roster = oppTeam.roster.filter(p=>!getIds.includes(p.id));
+
+  for(const p of getPlayers) myTeam.roster.push({ ...p, team: myTeam.name });
+  for(const p of givePlayers) oppTeam.roster.push({ ...p, team: oppTeam.name });
+
+  saveState();
+  return { ok:true, givePlayers, getPlayers, giveV, getV, mult, mySalaryAfter, oppSalaryAfter };
+}
+
+/* =========================
+   Helpers
+   ========================= */
+function mostNeededPos(team){
+  const count = {PG:0,SG:0,SF:0,PF:0,C:0};
+  for(const p of (team.roster||[])) count[p.pos] = (count[p.pos]||0) + 1;
+  let best="PG", min=Infinity;
+  for(const k of Object.keys(count)){
+    if(count[k] < min){ min=count[k]; best=k; }
+  }
+  return best;
+}
+
 function log(msg, cls=""){
   state.log.unshift({ t: Date.now(), msg, cls });
   if(state.log.length>220) state.log.length = 220;
 }
-function renderLog(){
-  const box = el("log");
-  box.innerHTML = state.log.slice(0,90).map(x=>{
-    const time = new Date(x.t).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"});
-    return `<p class="${x.cls}"><span class="muted">[${time}]</span> ${escapeHtml(x.msg)}</p>`;
-  }).join("") || `<p class="muted">（還沒有事件）</p>`;
-}
 
-/* =========================================================
-   UI + Flow
-   ========================================================= */
+/* =========================
+   UI
+   ========================= */
 function setPhaseUI(){
   const phase = state.phase;
-  const hdrStatus = el("hdrStatus");
-
   el("screenTeam").style.display  = (phase==="TEAM") ? "" : "none";
   el("screenCore").style.display  = (phase==="CORE") ? "" : "none";
   el("screenHub").style.display   = (phase==="HUB")  ? "" : "none";
   el("screenTrade").style.display = (phase==="TRADE")? "" : "none";
   el("screenFA").style.display    = (phase==="FA")   ? "" : "none";
 
-  let title="選隊", pill="Step 1/6";
-  if(phase==="CORE"){ title="選基石"; pill="Step 2/6"; }
-  if(phase==="HUB"){ title="主介面"; pill="Step 3/6"; }
-  if(phase==="TRADE"){ title="交易"; pill="Step 4/6"; }
-  if(phase==="FA"){ title="自由市場"; pill="Step 5/6"; }
+  let title="選隊", pill="Step 1/7";
+  if(phase==="CORE"){ title="選基石"; pill="Step 2/7"; }
+  if(phase==="HUB"){ title="主介面"; pill="Step 3/7"; }
+  if(phase==="TRADE"){ title="交易"; pill="Step 4/7"; }
+  if(phase==="FA"){ title="自由市場"; pill="Step 5/7"; }
 
   el("phaseTitle").textContent = title;
   el("phasePill").textContent = pill;
 
-  hdrStatus.textContent = (state.teamLocked && state.userTeam) ? `已選隊：${state.userTeam}` : "未選隊";
+  el("hdrStatus").textContent = (state.teamLocked && state.userTeam) ? `已選隊：${state.userTeam}` : "未選隊";
 
   const myTeam = (state.league && state.userTeamId!=null) ? state.league[state.userTeamId] : null;
+
   el("kpiSeason").textContent = state.league ? `S${state.season}` : "-";
   el("kpiDay").textContent = state.league
     ? (state.offseason?.active ? `休賽季` : `Day ${Math.min(state.dayIndex+1, state.gamesPerTeam)}/${state.gamesPerTeam}`)
@@ -1468,9 +1535,20 @@ function setPhaseUI(){
   el("kpiW").textContent = myTeam ? myTeam.w : 0;
   el("kpiL").textContent = myTeam ? myTeam.l : 0;
 
+  el("kpiSalary").textContent = myTeam ? `${teamSalary(myTeam)}/${CAP}` : "-";
+  el("kpiTP").textContent = `${state.training?.tp ?? 0}`;
+
   el("seasonHint").textContent = state.league
-    ? (state.offseason?.active ? `休賽季：選秀/補強` : `每隊 ${state.gamesPerTeam} 場`)
+    ? (state.offseason?.active ? `休賽季：選秀/輪流簽` : `每隊 ${state.gamesPerTeam} 場`)
     : "尚未建立聯盟";
+}
+
+function renderLog(){
+  const box = el("log");
+  box.innerHTML = state.log.slice(0,90).map(x=>{
+    const time = new Date(x.t).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"});
+    return `<p class="${x.cls}"><span class="muted">[${time}]</span> ${escapeHtml(x.msg)}</p>`;
+  }).join("") || `<p class="muted">（還沒有事件）</p>`;
 }
 
 function renderTeamScreen(){
@@ -1497,26 +1575,12 @@ function renderTeamScreen(){
   });
 }
 
-function chooseTeam(teamName){
-  state.userTeam = teamName;
-  state.teamLocked = true;
-  state.phase = "CORE";
-  state.chosenCoreIds = [];
-  // corePool already built in syncState(), but keep fresh
-  state.corePool = buildCorePoolFromActive(state.activePool);
-  saveState();
-  renderAll();
-}
-
 function renderCoreScreen(){
   const grid = el("coreGrid");
   grid.innerHTML = "";
-
   const selected = new Set(state.chosenCoreIds);
-  const canFinish = state.chosenCoreIds.length >= 2;
-
   el("coreCountTag").textContent = `已選 ${state.chosenCoreIds.length}`;
-  el("btnFinishCore").disabled = !canFinish;
+  el("btnFinishCore").disabled = (state.chosenCoreIds.length < 2);
 
   state.corePool.forEach(p=>{
     const isSelected = selected.has(p.id);
@@ -1527,7 +1591,7 @@ function renderCoreScreen(){
     btn.innerHTML = `
       <div>
         <b>${escapeHtml(p.name)} ${isSelected ? `<span class="star">★</span>` : ""}</b>
-        <div><small>${escapeHtml(p.pos)} · OVR ${p.ovr} · 年齡 ${p.age}</small></div>
+        <div><small>${escapeHtml(p.pos)} · OVR ${p.ovr} · 年齡 ${p.age} · 薪資 ${playerSalary({...p,isCore:true})}</small></div>
       </div>
       <span class="pill">${isSelected ? "已選" : "選取"}</span>
     `;
@@ -1541,77 +1605,39 @@ function renderCoreScreen(){
   };
 }
 
-function toggleCorePick(playerId){
-  const idx = state.chosenCoreIds.indexOf(playerId);
-  if(idx >= 0){
-    state.chosenCoreIds.splice(idx,1);
-  }else{
-    if(state.chosenCoreIds.length >= 3){
-      openModal({
-        title:"已達上限",
-        bodyHtml:`<div class="tiny muted">你最多只能選 <b>3</b> 位基石。</div>`,
-        actions:[{label:"OK", className:"primary", onClick: closeModal}]
-      });
-      return;
+function renderHubBanner(){
+  const hubBanner = el("hubBanner");
+  if(!state.offseason?.active){
+    hubBanner.style.display = "none";
+    hubBanner.innerHTML = "";
+    return;
+  }
+  const fa = state.offseason.fa;
+  const parts = [];
+  parts.push(`<div class="banner"><div class="tiny warnTxt"><b>休賽季進行中</b></div>`);
+  parts.push(`<div class="tiny muted" style="margin-top:6px">選秀：${state.offseason.draftDone ? "已完成" : "未完成"}｜自由市場輪流簽：${fa?.active ? "進行中" : "未開始/已結束"}</div>`);
+  if(fa?.active){
+    const currentTeamId = fa.order[fa.turnIndex];
+    parts.push(`<div class="tiny muted" style="margin-top:6px">目前回合：第 ${fa.round}/${fa.maxRounds} 輪 · 輪到 <b>${escapeHtml(state.league[currentTeamId].name)}</b></div>`);
+    if(currentTeamId === state.userTeamId){
+      parts.push(`<div class="tiny warnTxt" style="margin-top:6px">輪到你了：可以去自由市場簽 1 人，或在彈窗按 Skip。</div>`);
     }
-    state.chosenCoreIds.push(playerId);
   }
-  saveState();
-  renderAll();
-}
-
-function finalizeCoreAndLeague(){
-  state.league = buildLeague(TEAMS);
-  state.userTeamId = TEAMS.indexOf(state.userTeam);
-
-  const chosen = new Set(state.chosenCoreIds);
-  const myCores = state.corePool
-    .filter(p=>chosen.has(p.id))
-    .map(p=>({...p, isCore:true, team: state.userTeam}));
-
-  const usedIds = new Set(myCores.map(p=>p.id));
-  state.league[state.userTeamId].roster = myCores;
-
-  // AI cores from the SAME core pool, unique IDs
-  for(const team of state.league){
-    if(team.id === state.userTeamId) continue;
-    const aiCores = aiPickCoresFromCorePool(state.corePool, usedIds, 2, 3)
-      .map(p=>({...p, isCore:true, team: team.name}));
-    team.roster = aiCores;
-  }
-
-  state.dayIndex = 0;
-  state.scheduleDays = generateSeasonSchedule(state.league.map(t=>t.id), state.gamesPerTeam);
-
-  // build FA from active pool excluding rostered players
-  state.freeAgents = buildFreeAgentPoolFromActive();
-
-  // reset offseason
-  state.offseason = { active:false, draftDone:false, faDone:false, rookies:[] };
-
-  log(`你已完成建隊：${state.userTeam}（基石 ${myCores.length} 位）。`, "goodTxt");
-  log(`賽季 S${state.season} 開始（每隊 ${state.gamesPerTeam} 場）。`, "warnTxt");
-
-  state.phase = "HUB";
-  saveState();
-  renderAll();
+  parts.push(`</div>`);
+  hubBanner.style.display = "";
+  hubBanner.innerHTML = parts.join("");
 }
 
 function renderHubScreen(){
   const myTeam = state.league?.[state.userTeamId];
   el("hubTeamPill").textContent = state.userTeam ? `你的隊伍：${state.userTeam}` : "-";
-  el("rosterCapPill").textContent = myTeam ? `名單：${myTeam.roster.length}/${MAX_ROSTER}` : "-";
+  el("rosterCapPill").textContent = myTeam ? `名單：${myTeam.roster.length}/${MAX_ROSTER}｜薪資：${teamSalary(myTeam)}/${CAP}` : "-";
 
-  el("btnGoTrade").onclick = ()=>{
-    state.phase = "TRADE";
-    saveState();
-    renderAll();
-  };
-  el("btnGoFA").onclick = ()=>{
-    state.phase = "FA";
-    saveState();
-    renderAll();
-  };
+  renderHubBanner();
+
+  el("btnGoTrade").onclick = ()=>{ state.phase="TRADE"; saveState(); renderAll(); };
+  el("btnGoFA").onclick = ()=>{ state.phase="FA"; saveState(); renderAll(); };
+  el("btnGoTrain").onclick = ()=> openTrainingModal();
 
   const table = el("rosterTable");
   const roster = myTeam?.roster ?? [];
@@ -1627,14 +1653,14 @@ function renderHubScreen(){
             <button class="linkBtn" data-pid="${p.id}">${escapeHtml(p.name)}</button>
             ${p.isCore ? `<span class="star">★</span>` : ""}
             ${p.rookie ? `<span class="pill">R</span>` : ""}
-            <div class="tiny muted">${escapeHtml(p.pos)} · OVR ${p.ovr}</div>
+            <div class="tiny muted">${escapeHtml(p.pos)} · OVR ${p.ovr} · POT ${p.pot ?? 99} · 疲勞 ${p.fatigue ?? 0}</div>
           </td>
           <td>${p.age}</td>
-          <td>${escapeHtml(p.team ?? state.userTeam ?? "-")}</td>
+          <td>${playerSalary(p)}</td>
         </tr>
       `).join("");
     table.innerHTML = `
-      <thead><tr><th>球員</th><th>年齡</th><th>球隊</th></tr></thead>
+      <thead><tr><th>球員</th><th>年齡</th><th>薪資</th></tr></thead>
       <tbody>${rows}</tbody>
     `;
     table.querySelectorAll("button[data-pid]").forEach(btn=>{
@@ -1652,10 +1678,6 @@ function renderHubScreen(){
 
 function renderStandings(){
   const tbl = el("standingsTable");
-  if(!state.league){
-    tbl.innerHTML = `<tr><td class="muted">聯盟尚未建立。</td></tr>`;
-    return;
-  }
   const sorted = standingsSorted();
   const myId = state.userTeamId;
   const rows = sorted.map((t,i)=>{
@@ -1681,10 +1703,6 @@ function renderStandings(){
 
 function renderLeagueCores(){
   const list = el("leagueCoresList");
-  if(!state.league){
-    list.innerHTML = `<div class="item muted">聯盟尚未建立。</div>`;
-    return;
-  }
   list.innerHTML = state.league.map(team=>{
     const cores = (team.roster||[])
       .filter(p=>p.isCore)
@@ -1699,10 +1717,58 @@ function renderLeagueCores(){
   }).join("");
 }
 
-/* ===== Trade UI ===== */
+/* ===== Training Modal ===== */
+function openTrainingModal(){
+  const team = state.league[state.userTeamId];
+  const tp = state.training?.tp ?? 0;
+
+  const roster = [...team.roster].sort((a,b)=> (b.rookie-a.rookie) || (a.age-b.age) || (b.ovr-a.ovr));
+
+  const rows = roster.map(p=>`
+    <div class="row space" style="padding:8px;border-bottom:1px solid rgba(255,255,255,.06)">
+      <div>
+        <b>${escapeHtml(p.name)}</b> ${p.isCore?`<span class="star">★</span>`:""} ${p.rookie?`<span class="pill">R</span>`:""}
+        <div class="tiny muted">${escapeHtml(p.pos)} · OVR ${p.ovr} / POT ${p.pot ?? 99} · 疲勞 ${p.fatigue ?? 0} · 薪資 ${playerSalary(p)}</div>
+      </div>
+      <button class="primary" data-train="${p.id}" ${tp>=2 ? "" : "disabled"}>訓練（-2TP）</button>
+    </div>
+  `).join("");
+
+  openModal({
+    title:`訓練中心（TP：${tp}）`,
+    bodyHtml: `
+      <div class="tiny muted">每次訓練消耗 <b>2 TP</b>。疲勞越高、年齡越大越難成長；新秀更容易進步。</div>
+      <div style="height:10px"></div>
+      <div class="body" id="trainBox" style="padding:0">${rows}</div>
+    `,
+    actions:[{label:"關閉", className:"ghost", onClick: closeModal}]
+  });
+
+  setTimeout(()=>{
+    const box = document.getElementById("trainBox");
+    if(!box) return;
+    box.querySelectorAll("button[data-train]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const pid = Number(btn.getAttribute("data-train"));
+        const res = trainPlayer(state.userTeamId, pid);
+        if(!res.ok){
+          openModal({ title:"訓練失敗", bodyHtml:`<div class="tiny badTxt">${escapeHtml(res.reason)}</div>`, actions:[{label:"OK", className:"primary", onClick: closeModal}]});
+          return;
+        }
+        log(`訓練：${res.player.name} ${res.gain>0?`提升 +${res.gain} OVR`:"沒有提升"}（疲勞 ${res.player.fatigue}）`, res.gain>0?"goodTxt":"muted");
+        saveState();
+        closeModal();
+        renderAll();
+        openTrainingModal();
+      });
+    });
+  },0);
+}
+
+/* ===== Trade Screen ===== */
 function renderTradeScreen(){
   const myTeam = state.league[state.userTeamId];
-  el("tradeHintPill").textContent = `你的隊伍：${myTeam.name}`;
+  el("tradeHintPill").textContent = `你的隊伍：${myTeam.name}｜薪資 ${teamSalary(myTeam)}/${CAP}`;
 
   const oppSel = el("oppSelect");
   oppSel.innerHTML = "";
@@ -1718,128 +1784,170 @@ function renderTradeScreen(){
   oppSel.onchange = ()=>setupTradeForOpponent(Number(oppSel.value));
   el("btnRefreshTrade").onclick = ()=>setupTradeForOpponent(Number(oppSel.value));
 
-  el("btnBackHubFromTrade").onclick = ()=>{
-    state.phase = "HUB";
-    saveState();
-    renderAll();
-  };
+  el("btnBackHubFromTrade").onclick = ()=>{ state.phase="HUB"; saveState(); renderAll(); };
 
   el("btnTrade").onclick = ()=>{
     const oppTeamId = Number(oppSel.value);
-    const giveId = Number(el("giveSelect").value);
-    const getId  = Number(el("getSelect").value);
+    const giveIds = getCheckedIds("giveList");
+    const getIds  = getCheckedIds("getList");
 
-    const res = doTrade(oppTeamId, giveId, getId);
+    const res = doTradeMulti(oppTeamId, giveIds, getIds);
     if(!res.ok){
-      openModal({
-        title:"交易失敗",
-        bodyHtml:`<div class="tiny badTxt">${escapeHtml(res.reason)}</div>`,
-        actions:[{label:"OK", className:"primary", onClick: closeModal}]
-      });
+      openModal({ title:"交易失敗", bodyHtml:`<div class="tiny badTxt">${escapeHtml(res.reason)}</div>`, actions:[{label:"OK", className:"primary", onClick: closeModal}]});
       return;
     }
 
-    log(`交易成功：送出 ${res.give.name}，得到 ${res.get.name}。`, "goodTxt");
+    const giveList = res.givePlayers.map(p=>`${p.isCore?"★ ":""}${escapeHtml(p.name)} <span class="muted tiny">(${p.pos} ${p.ovr} · 薪資 ${playerSalary(p)})</span>`).join("<br>");
+    const getList  = res.getPlayers.map(p=>`${p.isCore?"★ ":""}${escapeHtml(p.name)} <span class="muted tiny">(${p.pos} ${p.ovr} · 薪資 ${playerSalary(p)})</span>`).join("<br>");
+
+    log(`交易成功：送出 ${res.givePlayers.length} 人，得到 ${res.getPlayers.length} 人。`, "goodTxt");
 
     openModal({
       title:"交易成功",
       bodyHtml: `
         <div class="tiny goodTxt"><b>完成交易！</b></div>
         <div style="height:8px"></div>
-        <div class="tiny muted">你送出：</div>
-        <div><b>${escapeHtml(res.give.name)}</b> ${res.give.isCore?`<span class="star">★</span>`:""} <span class="muted tiny">(${escapeHtml(res.give.pos)} ${res.give.ovr})</span></div>
+        <div class="tiny muted">你送出（總價值 ${res.giveV.toFixed(0)}）：</div>
+        <div class="tiny" style="line-height:1.6">${giveList}</div>
         <div style="height:8px"></div>
-        <div class="tiny muted">你得到：</div>
-        <div><b>${escapeHtml(res.get.name)}</b> ${res.get.isCore?`<span class="star">★</span>`:""} <span class="muted tiny">(${escapeHtml(res.get.pos)} ${res.get.ovr})</span></div>
+        <div class="tiny muted">你得到（總價值 ${res.getV.toFixed(0)}）：</div>
+        <div class="tiny" style="line-height:1.6">${getList}</div>
         <div style="height:10px"></div>
         <div class="tiny muted">倍率：${res.mult.toFixed(2)}（牽涉基石更難）</div>
+        <div class="tiny muted" style="margin-top:6px">你的薪資：${res.mySalaryAfter}/${CAP}</div>
       `,
       actions:[{label:"OK", className:"primary", onClick: ()=>{ closeModal(); renderAll(); }}]
     });
   };
 }
 
+function getCheckedIds(listId){
+  const list = document.getElementById(listId);
+  const ids = [];
+  list.querySelectorAll("input[type=checkbox]:checked").forEach(cb=>{
+    ids.push(Number(cb.value));
+  });
+  return ids;
+}
+
 function setupTradeForOpponent(oppTeamId){
   const myTeam = state.league[state.userTeamId];
   const oppTeam = state.league[oppTeamId];
 
-  const giveSel = el("giveSelect");
-  const getSel  = el("getSelect");
-  giveSel.innerHTML = "";
-  getSel.innerHTML = "";
-
   const myRoster = [...myTeam.roster].sort((a,b)=>(b.isCore-a.isCore)||(b.ovr-a.ovr));
   const oppRoster= [...oppTeam.roster].sort((a,b)=>(b.isCore-a.isCore)||(b.ovr-a.ovr));
 
-  myRoster.forEach(p=>{
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = `${p.isCore?"★ ":""}${p.name} (${p.pos} ${p.ovr})`;
-    giveSel.appendChild(opt);
-  });
-  oppRoster.forEach(p=>{
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = `${p.isCore?"★ ":""}${p.name} (${p.pos} ${p.ovr})`;
-    getSel.appendChild(opt);
-  });
+  const giveBox = el("giveList");
+  const getBox  = el("getList");
 
-  el("myRosterMini").innerHTML = myRoster.map(p=>`
-    <div class="item">
-      <button class="linkBtn" data-pid="${p.id}">${escapeHtml(p.name)}</button>
-      ${p.isCore?`<span class="star">★</span>`:""}
-      ${p.rookie?`<span class="pill">R</span>`:""}
-      <div class="tiny muted">${escapeHtml(p.pos)} · OVR ${p.ovr} · 價值 ${playerValue(p).toFixed(0)}</div>
+  giveBox.innerHTML = myRoster.map(p=>`
+    <div class="checkRow">
+      <label>
+        <input type="checkbox" value="${p.id}">
+        <div>
+          <b>${escapeHtml(p.name)}</b> ${p.isCore?`<span class="star">★</span>`:""} ${p.rookie?`<span class="pill">R</span>`:""}
+          <div class="tiny muted">${escapeHtml(p.pos)} · OVR ${p.ovr} · 價值 ${playerValue(p)} · 薪資 ${playerSalary(p)}</div>
+        </div>
+      </label>
+      <button class="linkBtn nowrap" data-detail="${p.id}">詳情</button>
     </div>
-  `).join("");
+  `).join("") || `<div class="item muted">（空）</div>`;
 
-  el("oppRosterMini").innerHTML = oppRoster.map(p=>`
-    <div class="item">
-      <button class="linkBtn" data-opid="${p.id}">${escapeHtml(p.name)}</button>
-      ${p.isCore?`<span class="star">★</span>`:""}
-      ${p.rookie?`<span class="pill">R</span>`:""}
-      <div class="tiny muted">${escapeHtml(p.pos)} · OVR ${p.ovr} · 價值 ${playerValue(p).toFixed(0)}</div>
+  getBox.innerHTML = oppRoster.map(p=>`
+    <div class="checkRow">
+      <label>
+        <input type="checkbox" value="${p.id}">
+        <div>
+          <b>${escapeHtml(p.name)}</b> ${p.isCore?`<span class="star">★</span>`:""} ${p.rookie?`<span class="pill">R</span>`:""}
+          <div class="tiny muted">${escapeHtml(p.pos)} · OVR ${p.ovr} · 價值 ${playerValue(p)} · 薪資 ${playerSalary(p)}</div>
+        </div>
+      </label>
+      <button class="linkBtn nowrap" data-opdetail="${p.id}">詳情</button>
     </div>
-  `).join("");
+  `).join("") || `<div class="item muted">（空）</div>`;
 
-  el("myRosterMini").querySelectorAll("button[data-pid]").forEach(btn=>{
+  giveBox.querySelectorAll("button[data-detail]").forEach(btn=>{
     btn.addEventListener("click", ()=>{
-      const pid = Number(btn.getAttribute("data-pid"));
+      const pid = Number(btn.getAttribute("data-detail"));
       const p = myTeam.roster.find(x=>x.id===pid);
       if(p) showPlayerDetail(p);
     });
   });
-  el("oppRosterMini").querySelectorAll("button[data-opid]").forEach(btn=>{
+  getBox.querySelectorAll("button[data-opdetail]").forEach(btn=>{
     btn.addEventListener("click", ()=>{
-      const pid = Number(btn.getAttribute("data-opid"));
+      const pid = Number(btn.getAttribute("data-opdetail"));
       const p = oppTeam.roster.find(x=>x.id===pid);
       if(p) showPlayerDetail(p);
     });
   });
 
-  function refreshValueInfo(){
-    const give = myTeam.roster.find(p=>p.id===Number(giveSel.value));
-    const get  = oppTeam.roster.find(p=>p.id===Number(getSel.value));
-    const mult = tradeMultiplier(give, get);
-    el("giveValueInfo").textContent = give ? `價值：${playerValue(give).toFixed(0)}${give.isCore?"（基石加權）":""}` : "價值：-";
-    el("getValueInfo").textContent  = get  ? `價值：${playerValue(get).toFixed(0)}${get.isCore?"（基石加權）":""}` : "價值：-";
-    el("aiRuleInfo").innerHTML = `AI 規則：你的報價價值 ≥ 對手球員價值 × <b>${mult.toFixed(2)}</b>（牽涉基石更難）`;
-  }
-  giveSel.onchange = refreshValueInfo;
-  getSel.onchange  = refreshValueInfo;
-  refreshValueInfo();
+  const updateSummary = ()=>{
+    const giveIds = getCheckedIds("giveList");
+    const getIds  = getCheckedIds("getList");
+
+    const givePlayers = myTeam.roster.filter(p=>giveIds.includes(p.id));
+    const getPlayers  = oppTeam.roster.filter(p=>getIds.includes(p.id));
+
+    const giveV = totalValue(givePlayers);
+    const getV = totalValue(getPlayers);
+    const mult = tradeMultiplierMulti(givePlayers, getPlayers);
+
+    el("giveSummary").textContent = `已選 ${givePlayers.length}｜價值 ${giveV.toFixed(0)}｜薪資 ${totalSalary(givePlayers)}`;
+    el("getSummary").textContent  = `已選 ${getPlayers.length}｜價值 ${getV.toFixed(0)}｜薪資 ${totalSalary(getPlayers)}`;
+
+    const myAfterCount  = myTeam.roster.length  - givePlayers.length + getPlayers.length;
+    const oppAfterCount = oppTeam.roster.length - getPlayers.length  + givePlayers.length;
+
+    const mySalaryAfter = teamSalary(myTeam) - totalSalary(givePlayers) + totalSalary(getPlayers);
+    const oppSalaryAfter= teamSalary(oppTeam)- totalSalary(getPlayers)  + totalSalary(givePlayers);
+
+    el("tradeRuleInfo").innerHTML =
+      `AI 規則：你的總價值 ≥ 對手總價值 × <b>${mult.toFixed(2)}</b>（牽涉基石更難）`;
+
+    el("tradeAfterInfo").innerHTML =
+      `交易後（預估）：你隊名單 ${myAfterCount}/${MAX_ROSTER} · 薪資 ${mySalaryAfter}/${CAP} ｜ ` +
+      `對手名單 ${oppAfterCount}/${MAX_ROSTER} · 薪資 ${oppSalaryAfter}/${CAP}`;
+  };
+
+  giveBox.querySelectorAll("input[type=checkbox]").forEach(cb=>cb.addEventListener("change", updateSummary));
+  getBox.querySelectorAll("input[type=checkbox]").forEach(cb=>cb.addEventListener("change", updateSummary));
+  updateSummary();
 }
 
-/* ===== Free Agency UI ===== */
+/* ===== FA Screen ===== */
 function renderFAScreen(){
   const myTeam = state.league[state.userTeamId];
-  el("faHintPill").textContent = `自由球員：${state.freeAgents.length}｜你的名單：${myTeam.roster.length}/${MAX_ROSTER}`;
 
-  el("btnBackHubFromFA").onclick = ()=>{
-    state.phase = "HUB";
-    saveState();
-    renderAll();
-  };
+  el("btnBackHubFromFA").onclick = ()=>{ state.phase="HUB"; saveState(); renderAll(); };
+
+  const faBanner = el("faBanner");
+  const fa = state.offseason?.fa;
+  if(state.offseason?.active && fa?.active){
+    const currentTeamId = fa.order[fa.turnIndex];
+    const isMyTurn = (currentTeamId === state.userTeamId);
+    faBanner.style.display = "";
+    faBanner.innerHTML = `
+      <div class="banner">
+        <div class="tiny warnTxt"><b>休賽季輪流簽</b></div>
+        <div class="tiny muted" style="margin-top:6px">
+          第 ${fa.round}/${fa.maxRounds} 輪 · 目前回合：<b>${escapeHtml(state.league[currentTeamId].name)}</b>
+        </div>
+        <div class="tiny ${isMyTurn ? "warnTxt" : "muted"}" style="margin-top:6px">
+          ${isMyTurn ? "輪到你：你可以在這頁簽 1 人（或等彈窗）。" : "不是你的回合：你在這頁不能簽人。"}
+        </div>
+        ${isMyTurn ? `<div style="margin-top:8px"><button class="ghost" id="btnSkipTurn">Skip（跳過回合）</button></div>` : ""}
+      </div>
+    `;
+    if(isMyTurn){
+      setTimeout(()=>{
+        const btn = document.getElementById("btnSkipTurn");
+        if(btn) btn.onclick = ()=>{ advanceTurn(); renderAll(); };
+      },0);
+    }
+  }else{
+    faBanner.style.display = "none";
+    faBanner.innerHTML = "";
+  }
 
   const searchBox = el("faSearch");
   const posFilter = el("faPosFilter");
@@ -1861,17 +1969,26 @@ function renderFAScreen(){
 
     const show = list.slice(0,60);
     const box = el("faList");
-    box.innerHTML = show.map(p=>`
-      <div class="item">
-        <div class="row space">
-          <div>
-            <button class="linkBtn" data-faid="${p.id}">${escapeHtml(p.name)}</button>
-            <div class="tiny muted">${escapeHtml(p.pos)} · OVR ${p.ovr} · 年齡 ${p.age}</div>
+
+    const isOffTurn = (state.offseason?.active && state.offseason?.fa?.active && state.offseason.fa.order[state.offseason.fa.turnIndex] !== state.userTeamId);
+    const canSignBase = !rosterFull(myTeam) && !isOffTurn;
+
+    box.innerHTML = show.map(p=>{
+      const sal = playerSalary(p);
+      const capOk = teamSalary(myTeam) + sal <= CAP;
+      const can = canSignBase && capOk;
+      return `
+        <div class="item">
+          <div class="row space">
+            <div>
+              <button class="linkBtn" data-faid="${p.id}">${escapeHtml(p.name)}</button>
+              <div class="tiny muted">${escapeHtml(p.pos)} · OVR ${p.ovr} · 年齡 ${p.age} · 薪資 ${sal}</div>
+            </div>
+            <button class="primary" data-sign="${p.id}" ${can ? "" : "disabled"}>簽下</button>
           </div>
-          <button class="primary" data-sign="${p.id}" ${rosterFull(myTeam) ? "disabled" : ""}>簽下</button>
         </div>
-      </div>
-    `).join("") || `<div class="item muted">（沒有符合條件的自由球員）</div>`;
+      `;
+    }).join("") || `<div class="item muted">（沒有符合條件的自由球員）</div>`;
 
     box.querySelectorAll("button[data-faid]").forEach(btn=>{
       btn.addEventListener("click", ()=>{
@@ -1888,7 +2005,14 @@ function renderFAScreen(){
           openModal({ title:"簽約失敗", bodyHtml:`<div class="tiny badTxt">${escapeHtml(res.reason)}</div>`, actions:[{label:"OK", className:"primary", onClick: closeModal}]});
           return;
         }
-        log(`你簽下：${res.player.name}（${res.player.pos} ${res.player.ovr}）`, "goodTxt");
+        log(`你簽下：${res.player.name}（${res.player.pos} ${res.player.ovr}，薪資 ${playerSalary(res.player)}）`, "goodTxt");
+
+        // if offseason turn-based, signing consumes the turn
+        if(state.offseason?.active && state.offseason?.fa?.active){
+          closeModal();
+          advanceTurn();
+        }
+
         saveState();
         renderAll();
       });
@@ -1901,7 +2025,7 @@ function renderFAScreen(){
         <button class="linkBtn" data-mepid="${p.id}">${escapeHtml(p.name)}</button>
         ${p.isCore?`<span class="star">★</span>`:""}
         ${p.rookie?`<span class="pill">R</span>`:""}
-        <div class="tiny muted">${escapeHtml(p.pos)} · OVR ${p.ovr}</div>
+        <div class="tiny muted">${escapeHtml(p.pos)} · OVR ${p.ovr} · 薪資 ${playerSalary(p)}</div>
       </div>
     `).join("") || `<div class="item muted">（空）</div>`;
 
@@ -1913,7 +2037,7 @@ function renderFAScreen(){
       });
     });
 
-    el("faHintPill").textContent = `自由球員：${state.freeAgents.length}｜你的名單：${myTeam.roster.length}/${MAX_ROSTER}`;
+    el("faHintPill").textContent = `自由球員：${state.freeAgents.length}｜你的名單：${myTeam.roster.length}/${MAX_ROSTER}｜薪資：${teamSalary(myTeam)}/${CAP}`;
   };
 
   searchBox.oninput = renderFALists;
@@ -1942,22 +2066,25 @@ function showPlayerDetail(p){
       <div class="row">
         <span class="pill">位置：${escapeHtml(p.pos)}</span>
         <span class="pill">年齡：${p.age}</span>
+        <span class="pill">POT：${p.pot ?? 99}</span>
+        <span class="pill">疲勞：${p.fatigue ?? 0}</span>
+        <span class="pill">薪資：${playerSalary(p)}</span>
         <span class="pill">價值：${playerValue(p).toFixed(0)}${p.isCore?"（基石加權）":""}</span>
-        <span class="pill">ID：${p.id}</span>
       </div>
       <div style="height:10px"></div>
       <div class="tiny muted">
-        非基石進隊方式：自由市場簽下 / 選秀加入 / 交易拿到。<br/>
-        休賽季可選：手動補強 or 自動補強（戰績倒序輪流）。
+        自由市場：純手動。<br/>
+        休賽季：依上季戰績倒序輪流簽（你的回合才可簽）。<br/>
+        交易：可多換一 / 一換多，且檢查薪資上限。
       </div>
     `,
     actions:[{label:"關閉", className:"primary", onClick: closeModal}]
   });
 }
 
-/* =========================================================
-   Controls: sim / new season / log
-   ========================================================= */
+/* =========================
+   Controls
+   ========================= */
 el("btnSim1").addEventListener("click", ()=>{
   if(!state.league){ log("請先完成選隊與選基石。", "warnTxt"); renderAll(); return; }
   simulateOneDay();
@@ -1984,7 +2111,7 @@ el("btnNewSeason").addEventListener("click", ()=>{
   openModal({
     title:"開始新賽季",
     bodyHtml:`<div class="tiny muted">會把全聯盟戰績清零，重新生成賽程。</div>
-             <div class="tiny warnTxt" style="margin-top:8px">（你的球員、交易、簽約、新秀都保留）</div>`,
+             <div class="tiny warnTxt" style="margin-top:8px">（球員、交易、簽約、新秀都保留）</div>`,
     actions:[
       {label:"取消", className:"ghost", onClick: closeModal},
       {label:"開始", className:"primary", onClick: ()=>{ closeModal(); startNewSeason(); renderAll(); }}
@@ -2054,11 +2181,8 @@ el("btnExport").addEventListener("click", ()=>{
 el("btnImport").addEventListener("click", ()=>{
   const raw = (el("importBox").value ?? "").trim();
   if(!raw){
-    openModal({
-      title:"Import 失敗",
-      bodyHtml:`<div class="tiny muted">你沒有貼任何 JSON。</div>`,
-      actions:[{label:"OK", className:"primary", onClick: closeModal}]
-    });
+    openModal({ title:"Import 失敗", bodyHtml:`<div class="tiny muted">你沒有貼任何 JSON。</div>`,
+      actions:[{label:"OK", className:"primary", onClick: closeModal}] });
     return;
   }
   openModal({
@@ -2089,24 +2213,18 @@ el("btnImport").addEventListener("click", ()=>{
   });
 });
 
-/* =========================================================
-   Render all
-   ========================================================= */
+/* =========================
+   Render All
+   ========================= */
 function renderAll(){
   setPhaseUI();
   renderLog();
 
-  if(state.phase==="TEAM"){
-    renderTeamScreen();
-  }else if(state.phase==="CORE"){
-    renderCoreScreen();
-  }else if(state.phase==="HUB"){
-    renderHubScreen();
-  }else if(state.phase==="TRADE"){
-    renderTradeScreen();
-  }else if(state.phase==="FA"){
-    renderFAScreen();
-  }
+  if(state.phase==="TEAM") renderTeamScreen();
+  if(state.phase==="CORE") renderCoreScreen();
+  if(state.phase==="HUB") renderHubScreen();
+  if(state.phase==="TRADE") renderTradeScreen();
+  if(state.phase==="FA") renderFAScreen();
 
   const ready = !!state.league;
   el("btnSim1").disabled = !ready;
@@ -2114,9 +2232,15 @@ function renderAll(){
   el("btnSimAll").disabled = !ready;
   el("btnNewSeason").disabled = !ready;
 }
-
-// Start
 renderAll();
+
+/* =========================
+   Wire: Team/Core flow buttons
+   ========================= */
+// Team -> Core handled in renderTeamScreen
+
+// Core finish handled in renderCoreScreen
+
 </script>
 </body>
 </html>
