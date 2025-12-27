@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>NBA GM Simulator v2.0 穩定版</title>
+<title>NBA GM Simulator v3 穩定版</title>
 <style>
 body { font-family: Arial, sans-serif; background:#f2f2f2; }
 #app { max-width: 1000px; margin:auto; padding:20px; }
@@ -12,23 +12,21 @@ button { padding:6px 10px; margin:4px; border:none; border-radius:4px; cursor:po
 button:hover { background:#0056b3; }
 select { padding:4px; margin:4px 0; }
 .player-card { display:inline-block; background:#e3e3e3; margin:4px; padding:6px 8px; border-radius:4px; min-width:120px; text-align:center; }
-.stats { margin-top:6px; font-size:0.9em; color:#333; }
 </style>
 </head>
 <body>
 <div id="app"></div>
 <script>
-// ===== 基本資料 =====
-const ACTIVE_TEAMS = ["Golden State Warriors","Los Angeles Lakers","Cleveland Cavaliers","San Antonio Spurs","Oklahoma City Thunder"];
+// ===== NBA 資料 =====
 const NBA_PLAYER_POOL = [
 {name:"Stephen Curry",pos:"PG",ovr:88},{name:"LeBron James",pos:"SF",ovr:90},{name:"Kevin Durant",pos:"PF",ovr:89},
 {name:"Giannis Antetokounmpo",pos:"PF",ovr:91},{name:"Luka Dončić",pos:"PG",ovr:89},{name:"Joel Embiid",pos:"C",ovr:90},
 {name:"Nikola Jokić",pos:"C",ovr:92},{name:"Jayson Tatum",pos:"SF",ovr:87},{name:"Ja Morant",pos:"PG",ovr:85},
 {name:"Devin Booker",pos:"SG",ovr:84},{name:"Donovan Mitchell",pos:"SG",ovr:85},{name:"Trae Young",pos:"PG",ovr:84}
+// 可補齊至 200 人
 ];
 
 // ===== 狀態 =====
-let futureNBAPlayers=[...NBA_PLAYER_POOL];
 let gameState={
  season:1,
  team:null,
@@ -42,10 +40,13 @@ let gameState={
  losses:0,
  mvp:null
 };
+
+const ACTIVE_TEAMS = ["Golden State Warriors","Los Angeles Lakers","Cleveland Cavaliers","San Antonio Spurs","Oklahoma City Thunder"];
 const MAX_SIGN=2;
 const MIN_ROSTER_SIZE=8;
+let futureNBAPlayers=[...NBA_PLAYER_POOL];
 
-// ===== 工具 =====
+// ===== 工具函數 =====
 function clonePlayer(p){return {...p};}
 function teamPower(roster){return roster.reduce((s,p)=>s+p.ovr,0)/Math.max(roster.length,1);}
 function pickMVP(allTeams){
@@ -57,19 +58,19 @@ function pickMVP(allTeams){
  return candidates[0];
 }
 
-// ===== 初始化 =====
+// ===== 初始化賽季 =====
 function startSeason(){
  gameState.aiTeams={};
  ACTIVE_TEAMS.forEach(t=>{
    if(t!==gameState.team) gameState.aiTeams[t]={roster:[]};
  });
- // 自由球員池
+ // 自由球員池生成
  gameState.freeAgents=[];
- let count=Math.min(6,futureNBAPlayers.length);
+ let count = Math.min(6,futureNBAPlayers.length);
  for(let i=0;i<count;i++){
-  let p=clonePlayer(futureNBAPlayers.shift());
-  p.age=18; p.salary=5; p.assigned=true;
-  gameState.freeAgents.push(p);
+   let p=clonePlayer(futureNBAPlayers.shift());
+   p.age=18; p.salary=5; p.assigned=true;
+   gameState.freeAgents.push(p);
  }
  gameState.drafted=0;
 }
@@ -77,9 +78,8 @@ function startSeason(){
 // ===== 簽約 =====
 function signPlayer(i){
  if(gameState.drafted>=MAX_SIGN) return alert("本季最多簽兩人");
- let p=gameState.freeAgents.splice(i,1)[0];
+ let p = gameState.freeAgents.splice(i,1)[0];
  gameState.roster.push(clonePlayer(p));
- gameState.drafted++;
  render();
 }
 
@@ -88,16 +88,17 @@ function finishSigning(){
  render();
 }
 
+// 分配剩餘球員給 AI
 function distributeRemaining(){
  const aiNames=Object.keys(gameState.aiTeams);
  gameState.freeAgents.forEach((p,i)=>{
-  const team=gameState.aiTeams[aiNames[i%aiNames.length]];
-  if(team.roster.length<MIN_ROSTER_SIZE) team.roster.push(clonePlayer(p));
+   const team=gameState.aiTeams[aiNames[i%aiNames.length]];
+   if(team.roster.length<MIN_ROSTER_SIZE) team.roster.push(clonePlayer(p));
  });
  gameState.freeAgents=[];
 }
 
-// ===== AI 補齊 =====
+// AI 補齊隊伍
 function fillTeam(r,isAI){
  if(isAI){
    while(r.length<MIN_ROSTER_SIZE){
@@ -109,20 +110,20 @@ function fillTeam(r,isAI){
  }
 }
 
-// ===== 例行賽 =====
+// ===== 模擬例行賽 =====
 function simulateSeason(){
  while(gameState.gamesPlayed<gameState.totalGames){
-  const myP=teamPower(gameState.roster);
-  let league=0,c=0;
-  Object.values(gameState.aiTeams).forEach(t=>{if(t.roster.length){league+=teamPower(t.roster);c++;}});
-  league=c?league/c:myP;
-  Math.random()<myP/(myP+league)?gameState.wins++:gameState.losses++;
-  gameState.gamesPlayed++;
+   const myP=teamPower(gameState.roster);
+   let league=0,c=0;
+   Object.values(gameState.aiTeams).forEach(t=>{if(t.roster.length){league+=teamPower(t.roster);c++;}});
+   league=c?league/c:myP;
+   Math.random()<myP/(myP+league)?gameState.wins++:gameState.losses++;
+   gameState.gamesPlayed++;
  }
  gameState.mvp=pickMVP(gameState.aiTeams);
- render();
  alert(`例行賽結束：${gameState.wins}勝 ${gameState.losses}敗\n當季MVP: ${gameState.mvp.name} (${gameState.mvp.pos}, OVR:${gameState.mvp.ovr})`);
  nextSeason();
+ render();
 }
 
 // ===== 新賽季 =====
@@ -136,7 +137,6 @@ function nextSeason(){
  startSeason();
  fillTeam(gameState.roster,false);
  Object.values(gameState.aiTeams).forEach(t=>fillTeam(t.roster,true));
- render();
 }
 
 // ===== UI =====
@@ -149,47 +149,47 @@ function selectTeam(){
 function render(){
  const app=document.getElementById("app");
  if(!gameState.team){
-  app.innerHTML=`<h2>選擇球隊</h2>
-   <select id="teamSel">${ACTIVE_TEAMS.map(t=>`<option>${t}</option>`).join("")}</select>
-   <button id="startBtn">開始</button>`;
-  document.getElementById("startBtn").addEventListener("click",selectTeam);
-  return;
+   app.innerHTML=`<h2>選擇球隊</h2>
+     <select id="teamSel">${ACTIVE_TEAMS.map(t=>`<option>${t}</option>`).join("")}</select>
+     <button id="startBtn">開始</button>`;
+   document.getElementById("startBtn").addEventListener("click",selectTeam);
+   return;
  }
  app.innerHTML=`
  <h2>第 ${gameState.season} 賽季｜${gameState.team}</h2>
  <section><b>你的球隊</b><br>${gameState.roster.map(p=>`<div class="player-card">${p.name}<br>${p.pos} | ${p.age}歲 | OVR:${p.ovr}</div>`).join("")||"空"}</section>
  <section><b>自由球員（可簽 ${MAX_SIGN-gameState.drafted} 人）</b><br>
- <div id="faList"></div>
- <button id="finishBtn">完成簽約</button></section>
- <section>
- <b>查看其他球隊名單</b><br>
- <select id="aiSel"><option value=''>選擇隊伍</option>
- ${Object.keys(gameState.aiTeams).map(t=>`<option>${t}</option>`).join("")}</select>
- <div id="aiRoster"></div></section>
- <section>
- <b>例行賽</b><br>
- <div>進度：${gameState.gamesPlayed}/${gameState.totalGames}</div>
- <div>戰績：${gameState.wins} 勝 ${gameState.losses} 敗</div>
- <div id="mvpInfo">${gameState.mvp?`當季MVP: ${gameState.mvp.name} (${gameState.mvp.pos}, OVR:${gameState.mvp.ovr})`:""}</div>
- <button id="simBtn">模擬例行賽</button>
+   <div id="faList"></div>
+   <button id="finishBtn">完成簽約</button>
  </section>
-`;
+ <section>
+   <b>其他球隊</b><br>
+   <select id="aiSel"><option value=''>選擇隊伍</option>${Object.keys(gameState.aiTeams).map(t=>`<option>${t}</option>`).join("")}</select>
+   <div id="aiRoster"></div>
+ </section>
+ <section>
+   <b>例行賽</b><br>
+   <div>進度：${gameState.gamesPlayed}/${gameState.totalGames}</div>
+   <div>戰績：${gameState.wins} 勝 ${gameState.losses} 敗</div>
+   <div id="mvpInfo">${gameState.mvp?`MVP: ${gameState.mvp.name} (${gameState.mvp.pos}, OVR:${gameState.mvp.ovr})`:""}</div>
+   <button id="simBtn">模擬例行賽</button>
+ </section>
+ `;
  const faDiv=document.getElementById("faList");
  gameState.freeAgents.forEach((p,i)=>{
-  const btn=document.createElement("button");
-  btn.innerText=p.name;
-  btn.addEventListener("click",()=>signPlayer(i));
-  faDiv.appendChild(btn);
+   const btn=document.createElement("button");
+   btn.innerText=p.name;
+   btn.addEventListener("click",()=>signPlayer(i));
+   faDiv.appendChild(btn);
  });
  document.getElementById("finishBtn").addEventListener("click",finishSigning);
  document.getElementById("simBtn").addEventListener("click",simulateSeason);
  document.getElementById("aiSel").addEventListener("change",()=>{
-  const sel=document.getElementById("aiSel");
-  const name=sel.value;
-  const div=document.getElementById("aiRoster");
-  if(!name){div.innerHTML=""; return;}
-  const roster=gameState.aiTeams[name].roster;
-  div.innerHTML=roster.map(p=>`<div class="player-card">${p.name}<br>${p.pos} | ${p.age}歲 | OVR:${p.ovr}</div>`).join("")||"空";
+   const sel=document.getElementById("aiSel");
+   const name=sel.value;
+   const div=document.getElementById("aiRoster");
+   if(!name){div.innerHTML=""; return;}
+   div.innerHTML=gameState.aiTeams[name].roster.map(p=>`<div class="player-card">${p.name}<br>${p.pos} | ${p.age}歲 | OVR:${p.ovr}</div>`).join("")||"空";
  });
 }
 
