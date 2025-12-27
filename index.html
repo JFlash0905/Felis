@@ -3,11 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>NBA GM Game — Phase E</title>
+  <title>NBA GM Game — Phase F</title>
   <style>
     :root{
       --bg:#0b0f14;--card:#111827;--panel:#0b1220;--stroke:#243044;
       --text:#e5e7eb;--muted:#9ca3af;--accent:#22c55e;--warn:#f59e0b;--bad:#ef4444;
+      --blue:#60a5fa;
     }
     *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans TC",sans-serif}
     body{margin:0;background:linear-gradient(180deg,#070a10,#0b0f14);color:var(--text)}
@@ -18,9 +19,9 @@
     }
     header h1{margin:0;font-size:16px}
     header .muted{color:var(--muted);font-size:12px}
-    main{padding:16px;max-width:1100px;margin:0 auto}
+    main{padding:16px;max-width:1200px;margin:0 auto}
     .grid{display:grid;grid-template-columns:1fr;gap:12px}
-    @media(min-width:980px){.grid{grid-template-columns: 380px 1fr}}
+    @media(min-width:1020px){.grid{grid-template-columns: 410px 1fr}}
     .card{background:rgba(17,24,39,.92);border:1px solid #1f2937;border-radius:12px;padding:12px}
     .panel{background:rgba(7,16,33,.55);border:1px solid #1f2937;border-radius:12px;padding:12px}
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -35,7 +36,9 @@
     button.ghost{background:transparent}
     button.warn{background:rgba(245,158,11,.13);border:1px solid rgba(245,158,11,.5)}
     button.danger{background:rgba(239,68,68,.13);border:1px solid rgba(239,68,68,.5)}
+    button.blue{background:rgba(96,165,250,.14);border:1px solid rgba(96,165,250,.5)}
     button:disabled{opacity:.45;cursor:not-allowed}
+    select{min-width:180px}
     .pill{padding:4px 8px;border-radius:999px;border:1px solid var(--stroke);color:var(--muted);font-size:12px}
     .kpi{display:flex;gap:10px;flex-wrap:wrap}
     .kpi .box{flex:1 1 120px;background:var(--panel);border:1px solid var(--stroke);border-radius:12px;padding:10px}
@@ -44,7 +47,7 @@
     .tiny{font-size:12px}
     .bigTitle{font-size:18px;margin:0 0 6px 0}
     .teamGrid{display:grid;grid-template-columns:1fr;gap:8px}
-    @media(min-width:720px){.teamGrid{grid-template-columns:1fr 1fr}}
+    @media(min-width:820px){.teamGrid{grid-template-columns:1fr 1fr}}
     .teamBtn{
       width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;gap:10px;
       padding:12px;border-radius:12px
@@ -59,28 +62,34 @@
     .tag{font-size:12px;color:var(--muted);border:1px solid var(--stroke);border-radius:999px;padding:2px 8px}
     .warnTxt{color:#fcd34d}
     .goodTxt{color:#86efac}
+    .badTxt{color:#fca5a5}
+    .linkBtn{background:transparent;border:none;padding:0;color:#93c5fd;cursor:pointer}
+    .linkBtn:hover{text-decoration:underline}
+    .cols2{display:grid;grid-template-columns:1fr;gap:10px}
+    @media(min-width:860px){.cols2{grid-template-columns:1fr 1fr}}
+    .miniList{max-height:260px;overflow:auto;background:var(--panel);border:1px solid var(--stroke);border-radius:12px;padding:8px}
+    .miniList .item{padding:8px;border-bottom:1px solid rgba(255,255,255,.06)}
+    .miniList .item:last-child{border-bottom:none}
     /* Modal */
     .modalBackdrop{
       position:fixed;inset:0;background:rgba(0,0,0,.6);
       display:none;align-items:center;justify-content:center;padding:16px;z-index:50;
     }
     .modal{
-      width:min(560px,100%);background:rgba(17,24,39,.97);
+      width:min(620px,100%);background:rgba(17,24,39,.97);
       border:1px solid #263244;border-radius:14px;padding:14px;
     }
     .modal h2{margin:0 0 8px 0;font-size:18px}
     .modal .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
     .modal .body{background:var(--panel);border:1px solid var(--stroke);border-radius:12px;padding:12px}
     .modal input{width:100%}
-    .linkBtn{background:transparent;border:none;padding:0;color:#93c5fd;cursor:pointer}
-    .linkBtn:hover{text-decoration:underline}
   </style>
 </head>
 <body>
 <header>
   <div>
-    <h1>NBA GM Game — Phase E</h1>
-    <div class="muted">選隊一次性｜選 2–3 基石｜點球員看資料｜Reset 需輸入 RESET｜自動存檔</div>
+    <h1>NBA GM Game — Phase F</h1>
+    <div class="muted">全聯盟從零建隊｜交易中心（基石代價極高）｜點球員看詳細｜Reset 需輸入 RESET｜自動存檔</div>
   </div>
   <div class="row">
     <span class="pill" id="hdrStatus">未選隊</span>
@@ -90,14 +99,14 @@
 
 <main>
   <div class="grid">
-    <!-- LEFT: PROGRESS / CONTROLS -->
+    <!-- LEFT -->
     <section class="card">
       <div class="row space">
         <div>
           <div class="tiny muted">目前階段</div>
           <div class="row">
             <b id="phaseTitle">選隊</b>
-            <span class="pill" id="phasePill">Step 1/3</span>
+            <span class="pill" id="phasePill">Step 1/4</span>
           </div>
         </div>
         <div class="row">
@@ -117,19 +126,20 @@
           <b><span id="kpiCore">0</span> / 3</b>
         </div>
         <div class="box">
-          <div class="tiny muted">狀態</div>
-          <b id="kpiState">未開始</b>
+          <div class="tiny muted">聯盟狀態</div>
+          <b id="kpiLeague">未建立</b>
         </div>
       </div>
 
       <div style="height:10px"></div>
 
       <div class="panel">
-        <b>規則</b>
+        <b>規則（你定的）</b>
         <ul class="tiny muted" style="margin:8px 0 0 18px">
-          <li>選隊只能一次，選完後「選隊」介面會消失（除非 Reset）。</li>
+          <li>選隊只能一次，選完後介面消失（除非 Reset）。</li>
           <li>必須選 <b>2–3 位</b> 基石球員才能進主介面。</li>
           <li>Reset 需要輸入 <b>RESET</b>（全大寫）才會清空全部進度。</li>
+          <li>基石可交易，但 <b>代價極高</b>（AI 幾乎不放，除非你開很大）。</li>
         </ul>
       </div>
 
@@ -147,23 +157,25 @@
       <div style="height:10px"></div>
 
       <div class="panel">
-        <b>小提醒</b>
+        <b>Phase F 你能做什麼？</b>
         <div class="tiny muted" style="margin-top:6px">
-          這是 Phase E 原型，先把「選擇的重量感」做對。下一階段才加交易/比賽/賽季。
+          先把「聯盟一起建隊」＋「交易（含基石權重）」做穩。<br/>
+          下一階段再加：比賽 / 賽季 / 排名 / 自由市場 / 選秀。
         </div>
       </div>
     </section>
 
-    <!-- RIGHT: MAIN VIEW -->
+    <!-- RIGHT -->
     <section class="card">
-      <!-- SCREEN: SELECT TEAM -->
+
+      <!-- SCREEN: TEAM -->
       <div id="screenTeam">
         <p class="bigTitle">Step 1：選擇你的隊伍</p>
         <p class="muted tiny" style="margin-top:-2px">選完就鎖定，除非 Reset。</p>
         <div class="teamGrid" id="teamGrid"></div>
       </div>
 
-      <!-- SCREEN: SELECT CORE -->
+      <!-- SCREEN: CORE -->
       <div id="screenCore" style="display:none">
         <div class="row space">
           <div>
@@ -178,7 +190,7 @@
 
         <div class="panel">
           <div class="row space">
-            <b>基石球員池</b>
+            <b>基石球員池（現實 NBA 名字）</b>
             <span class="pill muted">點卡片選取 / 取消</span>
           </div>
           <div style="height:8px"></div>
@@ -191,37 +203,100 @@
         <div class="row space">
           <div>
             <p class="bigTitle">主介面</p>
-            <div class="muted tiny">目前只有名單與球員詳細資訊（Phase E）。</div>
+            <div class="muted tiny">你可以看你的名單、進交易中心、看全聯盟每隊基石概覽。</div>
           </div>
           <div class="row">
             <span class="pill" id="hubTeamPill">-</span>
+            <button class="blue" id="btnGoTrade">交易中心</button>
+          </div>
+        </div>
+
+        <div class="cols2">
+          <div class="panel">
+            <div class="row space">
+              <b>你的球員名單</b>
+              <span class="pill muted">點球員名字看詳細</span>
+            </div>
+            <table id="rosterTable"></table>
+          </div>
+
+          <div class="panel">
+            <div class="row space">
+              <b>聯盟基石概覽</b>
+              <span class="pill muted">每隊 2–3 位</span>
+            </div>
+            <div class="miniList" id="leagueCoresList"></div>
+            <div class="tiny muted" style="margin-top:8px">
+              這會讓你交易時更有「對抗感」。下一階段我們再加排名與賽季。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCREEN: TRADE -->
+      <div id="screenTrade" style="display:none">
+        <div class="row space">
+          <div>
+            <p class="bigTitle">交易中心（1 換 1）</p>
+            <div class="tiny muted">基石交易代價極高：AI 需求倍率更大。</div>
+          </div>
+          <div class="row">
+            <button class="ghost" id="btnBackHub">← 回主介面</button>
           </div>
         </div>
 
         <div class="panel">
           <div class="row space">
-            <b>你的球員名單</b>
-            <span class="pill muted">點球員名字看詳細</span>
+            <b>選擇對手隊伍</b>
+            <span class="pill" id="tradeHintPill">-</span>
           </div>
-          <table id="rosterTable"></table>
-        </div>
+          <div style="height:10px"></div>
 
-        <div style="height:12px"></div>
+          <div class="row">
+            <select id="oppSelect"></select>
+            <button class="ghost" id="btnRefreshTrade">刷新清單</button>
+          </div>
 
-        <div class="panel">
-          <b>下一步（你之後要加的）</b>
-          <div class="tiny muted" style="margin-top:6px">
-            交易｜比賽｜賽季｜AI 建隊｜更多球員池… 都可以在這個狀態機上直接擴充。
+          <div style="height:10px"></div>
+
+          <div class="cols2">
+            <div class="panel" style="background:rgba(11,18,32,.8)">
+              <b>你送出</b>
+              <div class="tiny muted" style="margin-top:6px">選一位你隊球員</div>
+              <div style="height:8px"></div>
+              <select id="giveSelect" style="width:100%"></select>
+              <div class="tiny muted" style="margin-top:8px" id="giveValueInfo">價值：-</div>
+              <div style="height:8px"></div>
+              <div class="miniList" id="myRosterMini"></div>
+            </div>
+
+            <div class="panel" style="background:rgba(11,18,32,.8)">
+              <b>你得到</b>
+              <div class="tiny muted" style="margin-top:6px">選一位對手球員</div>
+              <div style="height:8px"></div>
+              <select id="getSelect" style="width:100%"></select>
+              <div class="tiny muted" style="margin-top:8px" id="getValueInfo">價值：-</div>
+              <div style="height:8px"></div>
+              <div class="miniList" id="oppRosterMini"></div>
+            </div>
+          </div>
+
+          <div style="height:12px"></div>
+
+          <div class="row space">
+            <div class="tiny muted" id="aiRuleInfo">AI 規則：你的報價價值 ≥ 對手球員價值 × 倍率</div>
+            <button class="primary" id="btnTrade">送出交易</button>
           </div>
         </div>
       </div>
+
     </section>
   </div>
 </main>
 
 <!-- Modal -->
 <div class="modalBackdrop" id="modalBackdrop" role="dialog" aria-modal="true">
-  <div class="modal" id="modal">
+  <div class="modal">
     <h2 id="modalTitle">Title</h2>
     <div class="body" id="modalBody"></div>
     <div class="actions" id="modalActions"></div>
@@ -230,10 +305,10 @@
 
 <script>
 /* =========================
-   Phase E Core Prototype
+   NBA GM — Phase F
    ========================= */
 
-const LS_KEY = "nba_gm_phaseE_save_v1";
+const LS_KEY = "nba_gm_phaseF_save_v1";
 
 const TEAMS = [
   "Atlanta Hawks","Boston Celtics","Brooklyn Nets","Charlotte Hornets","Chicago Bulls",
@@ -244,9 +319,7 @@ const TEAMS = [
   "Sacramento Kings","San Antonio Spurs","Toronto Raptors","Utah Jazz","Washington Wizards"
 ];
 
-const POS = ["PG","SG","SF","PF","C"];
 const rand = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
-const pick = arr => arr[rand(0,arr.length-1)];
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 const el = id => document.getElementById(id);
 
@@ -257,42 +330,163 @@ function escapeHtml(s){
     .replaceAll("'","&#039;");
 }
 
-/* ====== Player generation (placeholder)
-   你之後要換成「真實 NBA 球員」也沒問題：把 player pool 換成你的 JSON 就行。
+/* ===== Player pool (real NBA names)
+   這裡是「球員名字真實」，OVR/年齡是合理化值（非官方精準）。
+   Pool 要足夠大，讓 30 隊各選 2–3 位基石也不會缺人。
 */
-function seededName(i){
-  const first = ["Jalen","Devin","Jay","Brandon","Tyrese","CJ","Zach","Mikal","Kyrie","Jayson","Anthony","Paolo","Cade","Darius","Jrue","Julius","Bam","Domantas","De'Aaron","LaMelo","Shai","Scottie","Franz","Kawhi","Jimmy","Trae","Luka","Nikola","Joel","Victor","Alperen","Jamal","KAT","Pascal","Donovan","Desmond","Evan","OG","Kristaps","Jaren","Rudy","Ja","DeMar","Bradley"];
-  const last  = ["Walker","Green","Brown","Ingram","Haliburton","McCollum","LaVine","Bridges","Irving","Tatum","Edwards","Banchero","Cunningham","Garland","Holiday","Randle","Adebayo","Sabonis","Fox","Ball","Gilgeous-Alexander","Barnes","Wagner","Leonard","Butler","Young","Doncic","Jokic","Embiid","Wembanyama","Sengun","Murray","Towns","Siakam","Mitchell","Bane","Mobley","Anunoby","Porzingis","Jackson","Gobert","Morant","DeRozan","Beal"];
-  return `${first[i%first.length]} ${last[(i*7)%last.length]}`;
-}
-function genPlayer(id){
-  const name = seededName(id) + (id>60 ? ` ${String.fromCharCode(65+(id%26))}` : "");
-  const pos = pick(POS);
-  // 基石池偏強
-  const ovr = clamp(rand(78,94) + (id%9===0? 3:0), 75, 97);
-  const age = rand(19,33);
-  return { id, name, pos, ovr, age };
-}
-function buildCorePool(n=18){
-  const pool=[];
-  for(let i=1;i<=n;i++) pool.push(genPlayer(i));
-  // 讓池子更像「可選策略」：位置平均一下
-  pool.sort((a,b)=>a.pos.localeCompare(b.pos) || b.ovr-a.ovr);
-  return pool;
+const NBA_PLAYER_POOL = [
+  // Superstars / Stars
+  {id:1,name:"Nikola Jokic",pos:"C",ovr:98,age:29},
+  {id:2,name:"Giannis Antetokounmpo",pos:"PF",ovr:97,age:30},
+  {id:3,name:"Luka Doncic",pos:"PG",ovr:97,age:26},
+  {id:4,name:"Shai Gilgeous-Alexander",pos:"PG",ovr:95,age:27},
+  {id:5,name:"Joel Embiid",pos:"C",ovr:96,age:31},
+  {id:6,name:"Jayson Tatum",pos:"SF",ovr:94,age:27},
+  {id:7,name:"Stephen Curry",pos:"PG",ovr:95,age:37},
+  {id:8,name:"LeBron James",pos:"SF",ovr:94,age:41},
+  {id:9,name:"Kevin Durant",pos:"SF",ovr:94,age:37},
+  {id:10,name:"Anthony Davis",pos:"PF",ovr:93,age:32},
+  {id:11,name:"Devin Booker",pos:"SG",ovr:93,age:29},
+  {id:12,name:"Kawhi Leonard",pos:"SF",ovr:92,age:34},
+  {id:13,name:"Jimmy Butler",pos:"SF",ovr:91,age:36},
+  {id:14,name:"Damian Lillard",pos:"PG",ovr:92,age:35},
+  {id:15,name:"Ja Morant",pos:"PG",ovr:92,age:26},
+  {id:16,name:"Anthony Edwards",pos:"SG",ovr:93,age:24},
+  {id:17,name:"Donovan Mitchell",pos:"SG",ovr:92,age:29},
+  {id:18,name:"Trae Young",pos:"PG",ovr:90,age:27},
+  {id:19,name:"Tyrese Haliburton",pos:"PG",ovr:90,age:26},
+  {id:20,name:"Jalen Brunson",pos:"PG",ovr:89,age:29},
+  {id:21,name:"Jaylen Brown",pos:"SG",ovr:89,age:29},
+  {id:22,name:"Kyrie Irving",pos:"PG",ovr:89,age:33},
+  {id:23,name:"Karl-Anthony Towns",pos:"C",ovr:89,age:30},
+  {id:24,name:"Rudy Gobert",pos:"C",ovr:88,age:33},
+  {id:25,name:"Bam Adebayo",pos:"C",ovr:88,age:28},
+  {id:26,name:"Domantas Sabonis",pos:"C",ovr:88,age:29},
+  {id:27,name:"Zion Williamson",pos:"PF",ovr:88,age:25},
+  {id:28,name:"Paul George",pos:"SF",ovr:88,age:35},
+  {id:29,name:"De'Aaron Fox",pos:"PG",ovr:88,age:28},
+  {id:30,name:"Jamal Murray",pos:"PG",ovr:88,age:28},
+  {id:31,name:"Tyrese Maxey",pos:"SG",ovr:87,age:25},
+  {id:32,name:"Cade Cunningham",pos:"PG",ovr:87,age:24},
+  {id:33,name:"Scottie Barnes",pos:"SF",ovr:87,age:24},
+  {id:34,name:"Paolo Banchero",pos:"PF",ovr:87,age:23},
+  {id:35,name:"Victor Wembanyama",pos:"C",ovr:90,age:22},
+  {id:36,name:"Alperen Sengun",pos:"C",ovr:86,age:23},
+  {id:37,name:"Franz Wagner",pos:"SF",ovr:86,age:24},
+  {id:38,name:"Mikal Bridges",pos:"SF",ovr:86,age:29},
+  {id:39,name:"Brandon Ingram",pos:"SF",ovr:86,age:28},
+  {id:40,name:"Lauri Markkanen",pos:"PF",ovr:86,age:28},
+  {id:41,name:"Jaren Jackson Jr.",pos:"PF",ovr:86,age:26},
+  {id:42,name:"Desmond Bane",pos:"SG",ovr:85,age:27},
+  {id:43,name:"DeMar DeRozan",pos:"SF",ovr:85,age:36},
+  {id:44,name:"Bradley Beal",pos:"SG",ovr:84,age:32},
+  {id:45,name:"Jrue Holiday",pos:"PG",ovr:84,age:35},
+  {id:46,name:"Pascal Siakam",pos:"PF",ovr:85,age:32},
+  {id:47,name:"Julius Randle",pos:"PF",ovr:84,age:31},
+  {id:48,name:"Kristaps Porzingis",pos:"C",ovr:84,age:30},
+  {id:49,name:"Deandre Ayton",pos:"C",ovr:83,age:27},
+  {id:50,name:"Lauri Markkanen",pos:"PF",ovr:86,age:28},
+
+  // Solid starters
+  {id:51,name:"Darius Garland",pos:"PG",ovr:84,age:26},
+  {id:52,name:"Evan Mobley",pos:"PF",ovr:84,age:24},
+  {id:53,name:"Jarrett Allen",pos:"C",ovr:83,age:27},
+  {id:54,name:"OG Anunoby",pos:"SF",ovr:83,age:28},
+  {id:55,name:"RJ Barrett",pos:"SF",ovr:82,age:25},
+  {id:56,name:"Jalen Williams",pos:"SF",ovr:85,age:24},
+  {id:57,name:"Chet Holmgren",pos:"C",ovr:85,age:23},
+  {id:58,name:"Kristaps Porzingis",pos:"C",ovr:84,age:30},
+  {id:59,name:"Khris Middleton",pos:"SF",ovr:82,age:34},
+  {id:60,name:"Brook Lopez",pos:"C",ovr:81,age:37},
+  {id:61,name:"Jaren Jackson Jr.",pos:"PF",ovr:86,age:26},
+  {id:62,name:"Bobby Portis",pos:"PF",ovr:80,age:30},
+  {id:63,name:"Jordan Poole",pos:"SG",ovr:81,age:26},
+  {id:64,name:"Kyle Kuzma",pos:"PF",ovr:81,age:30},
+  {id:65,name:"Luguentz Dort",pos:"SG",ovr:80,age:26},
+  {id:66,name:"Jerami Grant",pos:"PF",ovr:81,age:31},
+  {id:67,name:"Anfernee Simons",pos:"SG",ovr:81,age:26},
+  {id:68,name:"Dejounte Murray",pos:"PG",ovr:83,age:29},
+  {id:69,name:"Jalen Johnson",pos:"PF",ovr:81,age:24},
+  {id:70,name:"Banchero (Paolo)",pos:"PF",ovr:87,age:23},
+
+  // More recognizable rotation
+  {id:71,name:"Klay Thompson",pos:"SG",ovr:79,age:35},
+  {id:72,name:"Draymond Green",pos:"PF",ovr:79,age:35},
+  {id:73,name:"Andrew Wiggins",pos:"SF",ovr:78,age:30},
+  {id:74,name:"Chris Paul",pos:"PG",ovr:77,age:40},
+  {id:75,name:"Aaron Gordon",pos:"PF",ovr:80,age:30},
+  {id:76,name:"Michael Porter Jr.",pos:"SF",ovr:81,age:27},
+  {id:77,name:"Jusuf Nurkic",pos:"C",ovr:79,age:31},
+  {id:78,name:"Grayson Allen",pos:"SG",ovr:77,age:30},
+  {id:79,name:"Caris LeVert",pos:"SG",ovr:78,age:31},
+  {id:80,name:"Spencer Dinwiddie",pos:"PG",ovr:77,age:32},
+  {id:81,name:"Austin Reaves",pos:"SG",ovr:80,age:27},
+  {id:82,name:"D'Angelo Russell",pos:"PG",ovr:79,age:29},
+  {id:83,name:"Rui Hachimura",pos:"PF",ovr:78,age:27},
+  {id:84,name:"Myles Turner",pos:"C",ovr:82,age:29},
+  {id:85,name:"Benedict Mathurin",pos:"SG",ovr:78,age:23},
+  {id:86,name:"DeMarre? (placeholder removed)",pos:"SF",ovr:75,age:30},
+
+  // Young + prospects
+  {id:87,name:"Scoot Henderson",pos:"PG",ovr:77,age:22},
+  {id:88,name:"Brandon Miller",pos:"SF",ovr:78,age:23},
+  {id:89,name:"LaMelo Ball",pos:"PG",ovr:85,age:24},
+  {id:90,name:"Terry Rozier",pos:"PG",ovr:79,age:31},
+  {id:91,name:"Devin Vassell",pos:"SG",ovr:80,age:25},
+  {id:92,name:"Victor Wembanyama (Spurs)",pos:"C",ovr:90,age:22},
+  {id:93,name:"De'Aaron Fox (Kings)",pos:"PG",ovr:88,age:28},
+  {id:94,name:"Domantas Sabonis (Kings)",pos:"C",ovr:88,age:29},
+  {id:95,name:"Keegan Murray",pos:"PF",ovr:78,age:25},
+  {id:96,name:"Jabari Smith Jr.",pos:"PF",ovr:78,age:22},
+  {id:97,name:"Amen Thompson",pos:"SG",ovr:77,age:22},
+  {id:98,name:"Jalen Green",pos:"SG",ovr:80,age:24},
+  {id:99,name:"Fred VanVleet",pos:"PG",ovr:81,age:31},
+  {id:100,name:"Dillon Brooks",pos:"SF",ovr:78,age:29},
+
+  // Extra depth (avoid duplicates hurting too much)
+  {id:101,name:"Zach LaVine",pos:"SG",ovr:84,age:30},
+  {id:102,name:"Nikola Vucevic",pos:"C",ovr:80,age:35},
+  {id:103,name:"DeMar DeRozan (Bulls)",pos:"SF",ovr:85,age:36},
+  {id:104,name:"Lonzo Ball",pos:"PG",ovr:78,age:28},
+  {id:105,name:"Jimmy Butler (Heat)",pos:"SF",ovr:91,age:36},
+  {id:106,name:"Bam Adebayo (Heat)",pos:"C",ovr:88,age:28},
+  {id:107,name:"Tyler Herro",pos:"SG",ovr:81,age:26},
+  {id:108,name:"Jaren Jackson Jr. (Grizzlies)",pos:"PF",ovr:86,age:26},
+  {id:109,name:"Jalen Suggs",pos:"SG",ovr:79,age:24},
+  {id:110,name:"Jonathan Isaac",pos:"PF",ovr:78,age:28},
+  {id:111,name:"Kemba Walker (legacy)",pos:"PG",ovr:75,age:35},
+  {id:112,name:"Russell Westbrook",pos:"PG",ovr:78,age:37},
+  {id:113,name:"James Harden",pos:"SG",ovr:84,age:36},
+  {id:114,name:"Paul George (Clippers)",pos:"SF",ovr:88,age:35},
+  {id:115,name:"Kawhi Leonard (Clippers)",pos:"SF",ovr:92,age:34},
+  {id:116,name:"Jalen Duren",pos:"C",ovr:78,age:22},
+  {id:117,name:"Ausar Thompson",pos:"SF",ovr:77,age:22},
+  {id:118,name:"Cameron Johnson",pos:"SF",ovr:78,age:29},
+  {id:119,name:"Mikal Bridges (Nets)",pos:"SF",ovr:86,age:29},
+  {id:120,name:"Ben Simmons",pos:"PG",ovr:77,age:29},
+];
+
+function buildCorePool(){
+  // 用 pool 當作「基石池」的來源；但 Step2 顯示的我們只取前 24 名（更像是挑選清單）
+  // 你也可以換成隨機抽 24 人：看你想要的遊戲感覺
+  const sorted = [...NBA_PLAYER_POOL].sort((a,b)=>b.ovr-a.ovr);
+  return sorted.slice(0, 24).map(p=>({...p}));
 }
 
 /* ====== State machine ======
-   phase: "TEAM" -> "CORE" -> "HUB"
+   phase: "TEAM" -> "CORE" -> "HUB" -> "TRADE"
 */
 function defaultState(){
   return {
-    version: 1,
+    version: 2,
     phase: "TEAM",
     teamLocked: false,
-    userTeam: null, // team name
-    corePool: buildCorePool(18),
-    chosenCoreIds: [], // ids from corePool
-    roster: [], // player objects you own
+    userTeam: null,
+    userTeamId: null,
+    corePool: buildCorePool(),
+    chosenCoreIds: [],
+    roster: [],
+    league: null, // [{id,name,w,l,roster:[]}, ...]
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
@@ -321,8 +515,31 @@ function hardReset(){
   state = defaultState();
   renderAll();
 }
+
 function syncLegacyStateIfNeeded(){
-  // Future-proof hook
+  // 如果你是從 Phase E 升上來：可能沒有 league / userTeamId
+  if(state && state.userTeam && state.phase==="HUB" && !state.league){
+    // 建聯盟：用你已經選好的 roster 當你隊的基石
+    state.league = buildLeague(TEAMS);
+    state.userTeamId = TEAMS.indexOf(state.userTeam);
+
+    const usedIds = new Set((state.roster||[]).map(p=>p.id));
+    state.league[state.userTeamId].roster = (state.roster||[]).map(p=>({...p, team: state.userTeam, isCore:true}));
+
+    // 其他隊 AI 挑 2–3 位基石（用整個 NBA_PLAYER_POOL 當來源）
+    const pool = [...NBA_PLAYER_POOL].sort((a,b)=>b.ovr-a.ovr);
+    for(const team of state.league){
+      if(team.id===state.userTeamId) continue;
+      const aiCores = aiPickCoresFromPool(pool, usedIds, 2, 3).map(p=>({...p, isCore:true, team: team.name}));
+      team.roster = aiCores;
+    }
+    saveState();
+  }
+
+  // 確保 corePool 在每次載入都存在（避免 import 缺欄位）
+  if(!state.corePool || !Array.isArray(state.corePool) || state.corePool.length===0){
+    state.corePool = buildCorePool();
+  }
 }
 
 /* ====== Modal helper ====== */
@@ -335,21 +552,92 @@ function openModal({title, bodyHtml, actions}){
     const btn = document.createElement("button");
     btn.textContent = a.label;
     btn.className = a.className || "ghost";
-    btn.addEventListener("click", ()=>{
-      if(a.onClick) a.onClick();
-    });
+    btn.addEventListener("click", ()=>{ if(a.onClick) a.onClick(); });
     actionsBox.appendChild(btn);
   });
   el("modalBackdrop").style.display = "flex";
 }
-function closeModal(){
-  el("modalBackdrop").style.display = "none";
-}
+function closeModal(){ el("modalBackdrop").style.display = "none"; }
 el("modalBackdrop").addEventListener("click",(e)=>{
   if(e.target === el("modalBackdrop")) closeModal();
 });
 
-/* ====== UI rendering ====== */
+/* ===== League helpers ===== */
+function buildLeague(teamNames){
+  return teamNames.map((name, id)=>({ id, name, w:0, l:0, roster:[] }));
+}
+
+function aiPickCoresFromPool(pool, usedIds, min=2, max=3){
+  const need = rand(min, max);
+  const picked = [];
+  const pickedPos = new Set();
+
+  const candidates = pool.filter(p=>!usedIds.has(p.id));
+  candidates.sort((a,b)=>b.ovr-a.ovr);
+
+  // 優先不同位置
+  for(const p of candidates){
+    if(picked.length>=need) break;
+    if(!pickedPos.has(p.pos)){
+      picked.push(p);
+      pickedPos.add(p.pos);
+      usedIds.add(p.id);
+    }
+  }
+  // 補滿
+  if(picked.length < need){
+    for(const p of candidates){
+      if(picked.length>=need) break;
+      if(usedIds.has(p.id)) continue;
+      picked.push(p);
+      usedIds.add(p.id);
+    }
+  }
+  return picked;
+}
+
+/* ===== Trade logic (your 3.B) ===== */
+function playerValue(p){
+  let v = p.ovr;
+  if(p.isCore) v += 22; // 基石加權（代價極高）
+  return v;
+}
+function tradeMultiplier(give, get){
+  const coreInvolved = !!(give?.isCore || get?.isCore);
+  return coreInvolved ? 1.80 : 1.10;
+}
+function doTrade(oppTeamId, givePlayerId, getPlayerId){
+  const myTeam = state.league[state.userTeamId];
+  const oppTeam = state.league[oppTeamId];
+
+  const give = myTeam.roster.find(p=>p.id===givePlayerId);
+  const get  = oppTeam.roster.find(p=>p.id===getPlayerId);
+
+  if(!give || !get) return { ok:false, reason:"找不到球員" };
+
+  const giveV = playerValue(give);
+  const getV  = playerValue(get);
+  const mult  = tradeMultiplier(give, get);
+
+  if(giveV < getV * mult){
+    return { ok:false, reason:`對方拒絕：你的報價 ${giveV.toFixed(0)} 太低，需求 ≥ ${(getV*mult).toFixed(0)}` };
+  }
+
+  // swap
+  myTeam.roster = myTeam.roster.filter(p=>p.id!==givePlayerId);
+  oppTeam.roster = oppTeam.roster.filter(p=>p.id!==getPlayerId);
+
+  myTeam.roster.push({...get, team: myTeam.name});
+  oppTeam.roster.push({...give, team: oppTeam.name});
+
+  // 同步 UI roster
+  state.roster = myTeam.roster;
+
+  saveState();
+  return { ok:true, give, get, mult, giveV, getV };
+}
+
+/* ====== UI ====== */
 function setPhaseUI(){
   const phase = state.phase;
   const hdrStatus = el("hdrStatus");
@@ -357,37 +645,32 @@ function setPhaseUI(){
   const screenTeam = el("screenTeam");
   const screenCore = el("screenCore");
   const screenHub  = el("screenHub");
+  const screenTrade= el("screenTrade");
 
-  screenTeam.style.display = (phase==="TEAM") ? "" : "none";
-  screenCore.style.display = (phase==="CORE") ? "" : "none";
-  screenHub.style.display  = (phase==="HUB")  ? "" : "none";
+  screenTeam.style.display  = (phase==="TEAM") ? "" : "none";
+  screenCore.style.display  = (phase==="CORE") ? "" : "none";
+  screenHub.style.display   = (phase==="HUB")  ? "" : "none";
+  screenTrade.style.display = (phase==="TRADE")? "" : "none";
 
-  let title="選隊", pill="Step 1/3";
-  if(phase==="CORE"){ title="選基石"; pill="Step 2/3"; }
-  if(phase==="HUB"){ title="主介面"; pill="Step 3/3"; }
+  let title="選隊", pill="Step 1/4";
+  if(phase==="CORE"){ title="選基石"; pill="Step 2/4"; }
+  if(phase==="HUB"){ title="主介面"; pill="Step 3/4"; }
+  if(phase==="TRADE"){ title="交易"; pill="Step 4/4"; }
 
   el("phaseTitle").textContent = title;
   el("phasePill").textContent = pill;
 
-  if(state.teamLocked && state.userTeam){
-    hdrStatus.textContent = `已選隊：${state.userTeam}`;
-  }else{
-    hdrStatus.textContent = "未選隊";
-  }
+  hdrStatus.textContent = (state.teamLocked && state.userTeam) ? `已選隊：${state.userTeam}` : "未選隊";
 
   // KPIs
   el("kpiTeam").textContent = state.userTeam ?? "-";
   el("kpiCore").textContent = state.chosenCoreIds.length;
-  el("kpiState").textContent =
-    phase==="TEAM" ? "請選隊" :
-    phase==="CORE" ? "請選基石" :
-    "進入主介面";
+  el("kpiLeague").textContent = state.league ? "已建立" : "未建立";
 }
 
 function renderTeamScreen(){
   const grid = el("teamGrid");
   grid.innerHTML = "";
-
   TEAMS.forEach(t=>{
     const btn = document.createElement("button");
     btn.className = "teamBtn";
@@ -401,10 +684,7 @@ function renderTeamScreen(){
                   <div class="tiny warnTxt" style="margin-top:10px">選完後無法更換（除非 Reset）。</div>`,
         actions: [
           {label:"取消", className:"ghost", onClick: closeModal},
-          {label:"確定鎖定", className:"primary", onClick: ()=>{
-            closeModal();
-            chooseTeam(t);
-          }}
+          {label:"確定鎖定", className:"primary", onClick: ()=>{ closeModal(); chooseTeam(t); }}
         ]
       });
     });
@@ -416,6 +696,9 @@ function chooseTeam(teamName){
   state.userTeam = teamName;
   state.teamLocked = true;
   state.phase = "CORE";
+  // 每次新選隊重新生成 corePool（可保持新鮮感）
+  state.corePool = buildCorePool();
+  state.chosenCoreIds = [];
   saveState();
   renderAll();
 }
@@ -443,28 +726,22 @@ function renderCoreScreen(){
       </div>
       <span class="pill">${isSelected ? "已選" : "選取"}</span>
     `;
-    btn.addEventListener("click", ()=>{
-      toggleCorePick(p.id);
-    });
+    btn.addEventListener("click", ()=>toggleCorePick(p.id));
     grid.appendChild(btn);
   });
 
   el("btnFinishCore").onclick = ()=>{
     if(state.chosenCoreIds.length < 2) return;
-    finalizeCore();
+    finalizeCoreAndLeague();
   };
 }
 
 function toggleCorePick(playerId){
   const idx = state.chosenCoreIds.indexOf(playerId);
-  const selectedCount = state.chosenCoreIds.length;
-
   if(idx >= 0){
-    // unselect
     state.chosenCoreIds.splice(idx,1);
   }else{
-    // select
-    if(selectedCount >= 3){
+    if(state.chosenCoreIds.length >= 3){
       openModal({
         title:"已達上限",
         bodyHtml:`<div class="tiny muted">你最多只能選 <b>3</b> 位基石。</div>`,
@@ -478,14 +755,32 @@ function toggleCorePick(playerId){
   renderAll();
 }
 
-function finalizeCore(){
-  // Build roster from chosen core players
+function finalizeCoreAndLeague(){
+  // 建立聯盟
+  state.league = buildLeague(TEAMS);
+  state.userTeamId = TEAMS.indexOf(state.userTeam);
+
+  // 你選到的基石（從 corePool 取）
   const chosen = new Set(state.chosenCoreIds);
-  const roster = state.corePool
+  const myCores = state.corePool
     .filter(p=>chosen.has(p.id))
     .map(p=>({...p, isCore:true, team: state.userTeam}));
 
-  state.roster = roster;
+  // usedIds：避免 AI 拿到你選過的同一個人
+  const usedIds = new Set(myCores.map(p=>p.id));
+
+  // 先塞你隊
+  state.league[state.userTeamId].roster = myCores;
+  state.roster = myCores;
+
+  // AI：從更大 pool 挑 2–3 位基石給其他隊
+  const pool = [...NBA_PLAYER_POOL].sort((a,b)=>b.ovr-a.ovr);
+  for(const team of state.league){
+    if(team.id === state.userTeamId) continue;
+    const aiCores = aiPickCoresFromPool(pool, usedIds, 2, 3).map(p=>({...p, isCore:true, team: team.name}));
+    team.roster = aiCores;
+  }
+
   state.phase = "HUB";
   saveState();
   renderAll();
@@ -493,17 +788,24 @@ function finalizeCore(){
 
 function renderHubScreen(){
   el("hubTeamPill").textContent = state.userTeam ? `你的隊伍：${state.userTeam}` : "-";
+
+  el("btnGoTrade").onclick = ()=>{
+    state.phase = "TRADE";
+    saveState();
+    renderAll();
+  };
+
+  // Your roster table
   const table = el("rosterTable");
+  const myTeam = state.league?.[state.userTeamId];
+  const roster = myTeam?.roster ?? state.roster ?? [];
 
-  if(!state.roster || state.roster.length===0){
-    table.innerHTML = `<tr><td class="muted">目前名單是空的。回到選基石挑 2–3 位。</td></tr>`;
-    return;
-  }
-
-  const rows = state.roster
-    .sort((a,b)=> (b.isCore-a.isCore) || (b.ovr-a.ovr))
-    .map(p=>{
-      return `
+  if(roster.length===0){
+    table.innerHTML = `<tr><td class="muted">目前名單是空的。</td></tr>`;
+  }else{
+    const rows = [...roster]
+      .sort((a,b)=> (b.isCore-a.isCore) || (b.ovr-a.ovr))
+      .map(p=>`
         <tr>
           <td>
             <button class="linkBtn" data-pid="${p.id}">${escapeHtml(p.name)}</button>
@@ -513,26 +815,171 @@ function renderHubScreen(){
           <td>${p.age}</td>
           <td>${escapeHtml(p.team ?? state.userTeam ?? "-")}</td>
         </tr>
-      `;
-    }).join("");
-
-  table.innerHTML = `
-    <thead>
-      <tr><th>球員</th><th>年齡</th><th>球隊</th></tr>
-    </thead>
-    <tbody>${rows}</tbody>
-  `;
-
-  // bind clicks
-  table.querySelectorAll("button[data-pid]").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      const pid = Number(btn.getAttribute("data-pid"));
-      const player = state.roster.find(x=>x.id===pid);
-      if(player) showPlayerDetail(player);
+      `).join("");
+    table.innerHTML = `
+      <thead><tr><th>球員</th><th>年齡</th><th>球隊</th></tr></thead>
+      <tbody>${rows}</tbody>
+    `;
+    table.querySelectorAll("button[data-pid]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const pid = Number(btn.getAttribute("data-pid"));
+        const player = roster.find(x=>x.id===pid);
+        if(player) showPlayerDetail(player);
+      });
     });
-  });
+  }
+
+  // League cores list
+  const list = el("leagueCoresList");
+  if(!state.league){
+    list.innerHTML = `<div class="item muted">聯盟尚未建立。</div>`;
+    return;
+  }
+  const items = state.league.map(team=>{
+    const cores = (team.roster||[]).map(p=>`${escapeHtml(p.name)}${p.isCore?` <span class="star">★</span>`:""} <span class="muted tiny">(${escapeHtml(p.pos)} ${p.ovr})</span>`).join("<br/>");
+    return `
+      <div class="item">
+        <b>${escapeHtml(team.name)}</b>
+        <div class="tiny" style="margin-top:6px">${cores || `<span class="muted">（空）</span>`}</div>
+      </div>
+    `;
+  }).join("");
+  list.innerHTML = items;
 }
 
+function renderTradeScreen(){
+  const myTeam = state.league[state.userTeamId];
+  el("tradeHintPill").textContent = `你的隊伍：${myTeam.name}`;
+
+  // Opponent select
+  const oppSel = el("oppSelect");
+  oppSel.innerHTML = "";
+  state.league.forEach(t=>{
+    if(t.id===state.userTeamId) return;
+    const opt = document.createElement("option");
+    opt.value = t.id;
+    opt.textContent = t.name;
+    oppSel.appendChild(opt);
+  });
+
+  const defaultOppId = Number(oppSel.value);
+  setupTradeForOpponent(defaultOppId);
+
+  oppSel.onchange = ()=>setupTradeForOpponent(Number(oppSel.value));
+  el("btnRefreshTrade").onclick = ()=>setupTradeForOpponent(Number(oppSel.value));
+
+  el("btnBackHub").onclick = ()=>{
+    state.phase = "HUB";
+    saveState();
+    renderAll();
+  };
+
+  el("btnTrade").onclick = ()=>{
+    const oppTeamId = Number(oppSel.value);
+    const giveId = Number(el("giveSelect").value);
+    const getId  = Number(el("getSelect").value);
+
+    const res = doTrade(oppTeamId, giveId, getId);
+    if(!res.ok){
+      openModal({
+        title:"交易失敗",
+        bodyHtml:`<div class="tiny badTxt">${escapeHtml(res.reason)}</div>`,
+        actions:[{label:"OK", className:"primary", onClick: closeModal}]
+      });
+      return;
+    }
+    openModal({
+      title:"交易成功",
+      bodyHtml: `
+        <div class="tiny goodTxt"><b>完成交易！</b></div>
+        <div style="height:8px"></div>
+        <div class="tiny muted">你送出：</div>
+        <div><b>${escapeHtml(res.give.name)}</b> ${res.give.isCore?`<span class="star">★</span>`:""} <span class="muted tiny">(${escapeHtml(res.give.pos)} ${res.give.ovr})</span></div>
+        <div style="height:8px"></div>
+        <div class="tiny muted">你得到：</div>
+        <div><b>${escapeHtml(res.get.name)}</b> ${res.get.isCore?`<span class="star">★</span>`:""} <span class="muted tiny">(${escapeHtml(res.get.pos)} ${res.get.ovr})</span></div>
+        <div style="height:10px"></div>
+        <div class="tiny muted">倍率：${res.mult.toFixed(2)}（基石牽涉會更難）</div>
+      `,
+      actions:[{label:"OK", className:"primary", onClick: ()=>{ closeModal(); renderAll(); }}]
+    });
+  };
+}
+
+function setupTradeForOpponent(oppTeamId){
+  const myTeam = state.league[state.userTeamId];
+  const oppTeam = state.league[oppTeamId];
+
+  // Build give/get selects
+  const giveSel = el("giveSelect");
+  const getSel  = el("getSelect");
+  giveSel.innerHTML = "";
+  getSel.innerHTML = "";
+
+  // Sort so cores show at top
+  const myRoster = [...myTeam.roster].sort((a,b)=>(b.isCore-a.isCore)||(b.ovr-a.ovr));
+  const oppRoster= [...oppTeam.roster].sort((a,b)=>(b.isCore-a.isCore)||(b.ovr-a.ovr));
+
+  myRoster.forEach(p=>{
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = `${p.isCore?"★ ":""}${p.name} (${p.pos} ${p.ovr})`;
+    giveSel.appendChild(opt);
+  });
+  oppRoster.forEach(p=>{
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = `${p.isCore?"★ ":""}${p.name} (${p.pos} ${p.ovr})`;
+    getSel.appendChild(opt);
+  });
+
+  // Mini lists
+  el("myRosterMini").innerHTML = myRoster.map(p=>`
+    <div class="item">
+      <button class="linkBtn" data-pid="${p.id}">${escapeHtml(p.name)}</button>
+      ${p.isCore?`<span class="star">★</span>`:""}
+      <div class="tiny muted">${escapeHtml(p.pos)} · OVR ${p.ovr} · 價值 ${playerValue(p).toFixed(0)}</div>
+    </div>
+  `).join("");
+
+  el("oppRosterMini").innerHTML = oppRoster.map(p=>`
+    <div class="item">
+      <button class="linkBtn" data-opid="${p.id}">${escapeHtml(p.name)}</button>
+      ${p.isCore?`<span class="star">★</span>`:""}
+      <div class="tiny muted">${escapeHtml(p.pos)} · OVR ${p.ovr} · 價值 ${playerValue(p).toFixed(0)}</div>
+    </div>
+  `).join("");
+
+  // Bind detail clicks
+  el("myRosterMini").querySelectorAll("button[data-pid]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const pid = Number(btn.getAttribute("data-pid"));
+      const p = myTeam.roster.find(x=>x.id===pid);
+      if(p) showPlayerDetail(p);
+    });
+  });
+  el("oppRosterMini").querySelectorAll("button[data-opid]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const pid = Number(btn.getAttribute("data-opid"));
+      const p = oppTeam.roster.find(x=>x.id===pid);
+      if(p) showPlayerDetail(p);
+    });
+  });
+
+  function refreshValueInfo(){
+    const give = myTeam.roster.find(p=>p.id===Number(giveSel.value));
+    const get  = oppTeam.roster.find(p=>p.id===Number(getSel.value));
+    const mult = tradeMultiplier(give, get);
+    el("giveValueInfo").textContent = give ? `價值：${playerValue(give).toFixed(0)}${give.isCore?"（基石加權）":""}` : "價值：-";
+    el("getValueInfo").textContent  = get  ? `價值：${playerValue(get).toFixed(0)}${get.isCore?"（基石加權）":""}` : "價值：-";
+    el("aiRuleInfo").innerHTML = `AI 規則：你的報價價值 ≥ 對手球員價值 × <b>${mult.toFixed(2)}</b>（牽涉基石更難）`;
+  }
+  giveSel.onchange = refreshValueInfo;
+  getSel.onchange  = refreshValueInfo;
+  refreshValueInfo();
+}
+
+/* ===== Player detail ===== */
 function showPlayerDetail(p){
   openModal({
     title: "球員詳細資訊",
@@ -548,20 +995,19 @@ function showPlayerDetail(p){
       <div class="row">
         <span class="pill">位置：${escapeHtml(p.pos)}</span>
         <span class="pill">年齡：${p.age}</span>
+        <span class="pill">價值：${playerValue(p).toFixed(0)}${p.isCore?"（基石加權）":""}</span>
         <span class="pill">ID：${p.id}</span>
       </div>
       <div style="height:10px"></div>
       <div class="tiny muted">
-        （Phase E）下一版你可以在這裡加：技能/潛力/合約/徽章/成長曲線。
+        下一步你可以加：技能/潛力/合約/士氣/傷病，這些都能用同一個 detail modal 擴充。
       </div>
     `,
-    actions:[
-      {label:"關閉", className:"primary", onClick: closeModal}
-    ]
+    actions:[{label:"關閉", className:"primary", onClick: closeModal}]
   });
 }
 
-/* ====== Reset / Export / Import ====== */
+/* ===== Reset / Export / Import ===== */
 el("btnReset").addEventListener("click", ()=>{
   openModal({
     title: "Reset（清空全部進度）",
@@ -593,7 +1039,6 @@ el("btnReset").addEventListener("click", ()=>{
 
 el("btnExport").addEventListener("click", ()=>{
   const json = JSON.stringify(state, null, 2);
-  // 嘗試複製到剪貼簿
   const tryCopy = async ()=>{
     try{
       await navigator.clipboard.writeText(json);
@@ -601,7 +1046,7 @@ el("btnExport").addEventListener("click", ()=>{
         title:"Export 成功",
         bodyHtml:`<div class="tiny muted">已把存檔 JSON 複製到剪貼簿。</div>
                   <div class="tiny muted" style="margin-top:8px">你也可以在下方查看：</div>
-                  <pre class="tiny" style="white-space:pre-wrap;background:var(--panel);border:1px solid var(--stroke);padding:10px;border-radius:12px;max-height:220px;overflow:auto">${escapeHtml(json)}</pre>`,
+                  <pre class="tiny" style="white-space:pre-wrap;background:var(--panel);border:1px solid var(--stroke);padding:10px;border-radius:12px;max-height:240px;overflow:auto">${escapeHtml(json)}</pre>`,
         actions:[{label:"關閉", className:"primary", onClick: closeModal}]
       });
     }catch{
@@ -636,9 +1081,9 @@ el("btnImport").addEventListener("click", ()=>{
         try{
           const parsed = JSON.parse(raw);
           if(!parsed || typeof parsed !== "object") throw new Error("bad json");
-          // basic validation
           if(!parsed.phase) throw new Error("missing phase");
           state = parsed;
+          syncLegacyStateIfNeeded();
           saveState();
           closeModal();
           renderAll();
@@ -655,7 +1100,7 @@ el("btnImport").addEventListener("click", ()=>{
   });
 });
 
-/* ====== Main render ====== */
+/* ===== Main render ===== */
 function renderAll(){
   setPhaseUI();
   if(state.phase==="TEAM"){
@@ -664,6 +1109,8 @@ function renderAll(){
     renderCoreScreen();
   }else if(state.phase==="HUB"){
     renderHubScreen();
+  }else if(state.phase==="TRADE"){
+    renderTradeScreen();
   }
 }
 </script>
