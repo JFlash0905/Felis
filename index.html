@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>NBA GM Simulator v0.8</title>
+<title>NBA GM Simulator v0.8.1</title>
 <style>
 body { font-family: Arial, sans-serif; background:#f2f2f2; }
 #app { max-width: 900px; margin:auto; padding:20px; }
@@ -102,7 +102,8 @@ function startSeason(){
 
  // 自由球員池最多6個
  gameState.freeAgents=[];
- for(let i=0;i<Math.min(6,futureNBAPlayers.length);i++){
+ let count=Math.min(6,futureNBAPlayers.length);
+ for(let i=0;i<count;i++){
   let p=createPlayer(futureNBAPlayers.shift(),18);
   gameState.freeAgents.push(p);
   draftedPlayers.push(p);
@@ -114,7 +115,7 @@ function startSeason(){
 function signPlayer(i){
  if(gameState.drafted>=2) return alert("本季最多簽兩人");
  let p=gameState.freeAgents.splice(i,1)[0];
- p.assigned=true; // 標記已分配
+ p.assigned=true;
  gameState.roster.push(p);
  gameState.drafted++;
  render();
@@ -160,6 +161,7 @@ function simulateSeason(){
   Math.random()<myP/(myP+league)?gameState.wins++:gameState.losses++;
   gameState.gamesPlayed++;
  }
+ render(); // ✅ 即時更新
  alert(`例行賽結束：${gameState.wins}勝 ${gameState.losses}敗`);
  nextSeason();
 }
@@ -173,7 +175,7 @@ function nextSeason(){
  gameState.roster.forEach(p=>p.age++);
  Object.values(gameState.aiTeams).forEach(t=>t.roster.forEach(p=>p.age++));
  startSeason();
- fillTeam(gameState.roster,false); // 玩家隊不補齊
+ fillTeam(gameState.roster,false);
  Object.values(gameState.aiTeams).forEach(t=>fillTeam(t.roster,true));
  render();
 }
